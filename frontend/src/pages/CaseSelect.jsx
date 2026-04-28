@@ -21,6 +21,7 @@ export default function CaseSelect() {
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <p style={{ color: '#8b7355', letterSpacing: 4, fontSize: 12, textTransform: 'uppercase', marginBottom: 12 }}>Detective Agency</p>
           <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: '#e8e0d0', fontWeight: 400, marginBottom: 12 }}>Murder Mystery</h1>
+          <p style={{ color: '#6b6055', fontSize: 16 }}>By: EMIL PAUL</p>
           <p style={{ color: '#6b6055', fontSize: 16 }}>Choose a case. Interrogate suspects. Find the killer.</p>
         </div>
 
