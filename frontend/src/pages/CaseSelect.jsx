@@ -44,7 +44,7 @@ function Intro({ onDone }) {
 export default function CaseSelect() {
   const [cases, setCases] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showIntro, setShowIntro] = useState(true)
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('introSeen'))
   const [hoveredId, setHoveredId] = useState(null)
   const navigate = useNavigate()
 
@@ -55,7 +55,7 @@ export default function CaseSelect() {
       .catch(() => setLoading(false))
   }, [])
 
-  if (showIntro) return <Intro onDone={() => setShowIntro(false)} />
+  if (showIntro) return <Intro onDone={() => { sessionStorage.setItem('introSeen', '1'); setShowIntro(false) }} />/>
 
   return (
     <div style={{
