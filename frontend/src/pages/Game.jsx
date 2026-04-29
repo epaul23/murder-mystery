@@ -76,6 +76,30 @@ export default function Game() {
       })
       const data = await res.json()
       setReveal(data)
+
+      // Calculate score
+      const score = data.correct
+        ? Math.max(1000 - (totalQuestions * 30), 100)
+        : 0
+
+      // Ask for name and save to leaderboard
+      if (data.correct) {
+        const name = prompt('🎉 Case solved! Enter your name for the leaderboard:')
+        if (name && name.trim()) {
+          await fetch(`${import.meta.env.VITE_API_URL || ''}/api/leaderboard`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              player_name: name.trim(),
+              case_id: Number(caseId),
+              case_title: caseData.title,
+              score,
+              questions_used: totalQuestions,
+              solved: true,
+            }),
+          })
+        }
+      }
     } catch {
       setReveal({ correct: false, reveal: 'Something went wrong. Try again.' })
     }
