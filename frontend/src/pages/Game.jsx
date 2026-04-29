@@ -24,32 +24,34 @@ function getRank(score) {
 }
 
 export default function Game() {
-  const { caseId } = useParams()         // Get case ID from URL
+  const { caseId } = useParams()
   const navigate = useNavigate()
 
   // Core game state
-  const [caseData, setCaseData] = useState(null)           // Current case info
-  const [selectedSuspect, setSelectedSuspect] = useState(null) // Who player is interrogating
-  const [histories, setHistories] = useState({})           // Chat history per suspect
-  const [input, setInput] = useState('')                   // Current question input
-  const [loading, setLoading] = useState(false)            // API loading state
+  const [caseData, setCaseData] = useState(null)
+  const [selectedSuspect, setSelectedSuspect] = useState(null)
+  const [histories, setHistories] = useState({})
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
 
   // Player tools
-  const [notes, setNotes] = useState('')                   // Player's personal notes
+  const [notes, setNotes] = useState('')
 
-  // Accusation state
-  const [accuseMode, setAccuseMode] = useState(false)      // Show accusation modal
-  const [accusedName, setAccusedName] = useState('')       // Who player accuses
-  const [reasoning, setReasoning] = useState('')           // Player's reasoning
+  // Accusation state — now includes method + motive
+  const [accuseMode, setAccuseMode] = useState(false)
+  const [accusedName, setAccusedName] = useState('')
+  const [accusedMethod, setAccusedMethod] = useState('')   // NEW: method selection
+  const [accusedMotive, setAccusedMotive] = useState('')   // NEW: motive selection
+  const [reasoning, setReasoning] = useState('')
 
   // Results
-  const [reveal, setReveal] = useState(null)               // Reveal result after accusation
+  const [reveal, setReveal] = useState(null)
 
   // Scoring
-  const [questionCounts, setQuestionCounts] = useState({}) // Questions asked per suspect
-  const [score, setScore] = useState(1000)                 // Live score (starts at 1000)
+  const [questionCounts, setQuestionCounts] = useState({})
+  const [score, setScore] = useState(1000)
 
-  const chatRef = useRef(null) // For auto-scrolling chat
+  const chatRef = useRef(null)
 
   // Derived values
   const totalQuestions = Object.values(questionCounts).reduce((a, b) => a + b, 0)
@@ -64,7 +66,6 @@ export default function Game() {
         const found = cases.find(c => c.id === Number(caseId))
         setCaseData(found)
         if (found) {
-          // Initialize empty chat history for each suspect
           const init = {}
           found.suspectNames.forEach(n => init[n] = [])
           setHistories(init)
@@ -80,30 +81,26 @@ export default function Game() {
   // Send a question to the selected suspect
   const sendQuestion = async () => {
     if (!input.trim() || !selectedSuspect || loading) return
-    if (questionsLeft <= 0) return // Block if out of questions
+    if (questionsLeft <= 0) return
 
     const q = input.trim()
     setInput('')
     setLoading(true)
 
-    // Add player's question to chat history
     const newHistory = [...(histories[selectedSuspect] || []), { role: 'user', content: q }]
     setHistories(prev => ({ ...prev, [selectedSuspect]: newHistory }))
 
-    // Increment question count and deduct 20 points per question
+    // Deduct 20 points per question
     setQuestionCounts(prev => ({ ...prev, [selectedSuspect]: (prev[selectedSuspect] || 0) + 1 }))
     setScore(prev => Math.max(prev - 20, 0))
 
     try {
-      // Call backend to get AI suspect response
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/interrogate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caseId: Number(caseId), suspectName: selectedSuspect, question: q, history: newHistory }),
       })
       const data = await res.json()
-
-      // Add suspect's reply to chat history
       setHistories(prev => ({ ...prev, [selectedSuspect]: [...newHistory, { role: 'assistant', content: data.reply }] }))
     } catch {
       setHistories(prev => ({ ...prev, [selectedSuspect]: [...newHistory, { role: 'assistant', content: 'The suspect stares at you silently.' }] }))
@@ -111,24 +108,24 @@ export default function Game() {
     setLoading(false)
   }
 
-  // Submit final accusation
+  // Submit final accusation with suspect + method + motive + reasoning
   const submitAccusation = async () => {
-    if (!accusedName || !reasoning.trim()) return
+    if (!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim()) return
     setLoading(true)
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/accuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caseId: Number(caseId), accusedName, reasoning }),
+        body: JSON.stringify({ caseId: Number(caseId), accusedName, accusedMethod, accusedMotive, reasoning }),
       })
       const data = await res.json()
 
-      // +200 for correct accusation, -200 for wrong
+      // +200 for correct, -200 for wrong
       const finalScore = data.correct ? Math.max(score + 200, 0) : Math.max(score - 200, 0)
       setScore(finalScore)
       setReveal({ ...data, finalScore })
 
-      // If correct, ask for name and save to leaderboard
+      // Save to leaderboard if correct
       if (data.correct) {
         const name = prompt('🎉 Case solved! Enter your name for the leaderboard:')
         if (name && name.trim()) {
@@ -152,7 +149,6 @@ export default function Game() {
     setLoading(false)
   }
 
-  // Show loading state while case data fetches
   if (!caseData) return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#6b6055' }}>Loading case file...</p>
@@ -186,7 +182,7 @@ export default function Game() {
         </div>
       </div>
 
-      {/* ── Warning bar when questions are low ── */}
+      {/* ── Warning bars ── */}
       {questionsLeft <= 5 && questionsLeft > 0 && (
         <div style={{ background: '#1a0808', borderBottom: '1px solid #3a1515', padding: '6px 1.5rem', textAlign: 'center' }}>
           <p style={{ fontSize: 12, color: '#f87171' }}>⚠️ Only {questionsLeft} questions remaining — choose wisely!</p>
@@ -200,11 +196,10 @@ export default function Game() {
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', maxHeight: 'calc(100vh - 60px)' }}>
 
-        {/* ── Left sidebar: suspects + notes ── */}
+        {/* ── Left sidebar ── */}
         <div style={{ width: 220, background: '#0d0d0a', borderRight: '1px solid #1a1a15', padding: '1rem', overflowY: 'auto', flexShrink: 0 }}>
           <p style={{ fontSize: 11, color: '#3a3530', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Suspects</p>
 
-          {/* Suspect buttons */}
           {caseData.suspectNames.map((name, i) => {
             const colors = AVATAR_COLORS[i % AVATAR_COLORS.length]
             const initials = name.split(' ').map(w => w[0]).join('')
@@ -222,7 +217,7 @@ export default function Game() {
             )
           })}
 
-          {/* Notes area */}
+          {/* Notes */}
           <div style={{ borderTop: '1px solid #1a1a15', marginTop: 16, paddingTop: 16 }}>
             <p style={{ fontSize: 11, color: '#3a3530', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 }}>Your notes</p>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Jot down clues..." style={{ width: '100%', background: '#0a0a0f', border: '1px solid #1a1a15', borderRadius: 6, color: '#8b7355', fontSize: 12, padding: 8, resize: 'none', height: 100, fontFamily: 'Georgia, serif' }} />
@@ -237,7 +232,6 @@ export default function Game() {
         {/* ── Main chat area ── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {!selectedSuspect ? (
-            // Placeholder when no suspect selected
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
               <p style={{ color: '#3a3530', fontSize: 16 }}>Select a suspect to begin interrogation</p>
               <p style={{ color: '#2a2520', fontSize: 13 }}>Victim: {caseData.victim} — {caseData.method}</p>
@@ -261,7 +255,6 @@ export default function Game() {
                     <p style={{ fontSize: 15, color: msg.role === 'user' ? '#a0c0a0' : '#e8e0d0', lineHeight: 1.7 }}>{msg.content}</p>
                   </div>
                 ))}
-                {/* Loading indicator */}
                 {loading && (
                   <div style={{ marginBottom: '1.5rem' }}>
                     <p style={{ fontSize: 11, color: '#5a4535', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{selectedSuspect}</p>
@@ -287,25 +280,51 @@ export default function Game() {
         </div>
       </div>
 
-      {/* ── Accusation modal ── */}
+      {/* ── Accusation modal — now with method + motive ── */}
       {accuseMode && !reveal && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#0d0d0a', border: '1px solid #2a1515', borderRadius: 12, padding: '2rem', maxWidth: 480, width: '100%' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', overflowY: 'auto' }}>
+          <div style={{ background: '#0d0d0a', border: '1px solid #2a1515', borderRadius: 12, padding: '2rem', maxWidth: 500, width: '100%', margin: 'auto' }}>
             <h2 style={{ fontSize: 20, fontWeight: 400, color: '#e8e0d0', marginBottom: 4 }}>Make your accusation</h2>
-            <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Current score: <span style={{ color: '#8b7355' }}>{score} pts</span> — Correct accusation adds 200pts</p>
-            <p style={{ fontSize: 12, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Who did it?</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Score: <span style={{ color: '#8b7355' }}>{score} pts</span> — Correct adds 200pts</p>
+
+            {/* Who killed them */}
+            <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Who killed them?</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
               {caseData.suspectNames.map(name => (
                 <button key={name} onClick={() => setAccusedName(name)} style={{ background: accusedName === name ? '#2a0a0a' : '#0a0a0f', border: accusedName === name ? '1px solid #f87171' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedName === name ? '#f87171' : '#8b7355', fontSize: 13 }}>
                   {name}
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: 12, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Your reasoning</p>
-            <textarea value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="What's the motive, method, and key clue that proves it?" style={{ width: '100%', background: '#0a0a0f', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', fontSize: 13, padding: 12, resize: 'none', height: 80, fontFamily: 'Georgia, serif', marginBottom: 16 }} />
+
+            {/* What was the method */}
+            <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>What was the method?</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+              {['Poison', 'Stabbing', 'Suffocation', 'Blunt force', 'Sedatives', 'Other'].map(method => (
+                <button key={method} onClick={() => setAccusedMethod(method)} style={{ background: accusedMethod === method ? '#1a0a2a' : '#0a0a0f', border: accusedMethod === method ? '1px solid #9f7aea' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedMethod === method ? '#9f7aea' : '#8b7355', fontSize: 13 }}>
+                  {method}
+                </button>
+              ))}
+            </div>
+
+            {/* What was the motive */}
+            <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>What was the motive?</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+              {['Blackmail', 'Revenge', 'Financial gain', 'Jealousy', 'Self-protection', 'Other'].map(motive => (
+                <button key={motive} onClick={() => setAccusedMotive(motive)} style={{ background: accusedMotive === motive ? '#0a1a0a' : '#0a0a0f', border: accusedMotive === motive ? '1px solid #4ade80' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedMotive === motive ? '#4ade80' : '#8b7355', fontSize: 13 }}>
+                  {motive}
+                </button>
+              ))}
+            </div>
+
+            {/* Key clue */}
+            <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Which clue proves it?</p>
+            <textarea value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="What key contradiction or evidence proves your accusation?" style={{ width: '100%', background: '#0a0a0f', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', fontSize: 13, padding: 12, resize: 'none', height: 70, fontFamily: 'Georgia, serif', marginBottom: 16 }} />
+
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setAccuseMode(false)} style={{ flex: 1, background: 'none', border: '1px solid #2a2520', borderRadius: 8, color: '#6b6055', fontSize: 14, padding: 12, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={submitAccusation} disabled={!accusedName || !reasoning.trim() || loading} style={{ flex: 1, background: '#2a0a0a', border: '1px solid #f87171', borderRadius: 8, color: '#f87171', fontSize: 14, padding: 12, cursor: 'pointer' }}>
+              {/* Disabled until all fields filled */}
+              <button onClick={submitAccusation} disabled={!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim() || loading} style={{ flex: 1, background: '#2a0a0a', border: '1px solid #f87171', borderRadius: 8, color: '#f87171', fontSize: 14, padding: 12, cursor: 'pointer', opacity: (!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim()) ? 0.4 : 1 }}>
                 {loading ? 'Revealing...' : 'Accuse'}
               </button>
             </div>
@@ -348,7 +367,7 @@ export default function Game() {
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button onClick={() => navigate('/')} style={{ background: 'none', border: '1px solid #2a2520', borderRadius: 8, color: '#8b7355', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Back to cases</button>
-              <button onClick={() => { setReveal(null); setAccuseMode(false); setAccusedName(''); setReasoning(''); }} style={{ background: '#0a1a0a', border: '1px solid #4ade80', borderRadius: 8, color: '#4ade80', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Keep investigating</button>
+              <button onClick={() => { setReveal(null); setAccuseMode(false); setAccusedName(''); setAccusedMethod(''); setAccusedMotive(''); setReasoning(''); }} style={{ background: '#0a1a0a', border: '1px solid #4ade80', borderRadius: 8, color: '#4ade80', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Keep investigating</button>
             </div>
           </div>
         </div>
