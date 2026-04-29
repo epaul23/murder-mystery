@@ -82,6 +82,16 @@ export default function CaseSelect() {
             Choose a case. Interrogate suspects. Find the killer.
           </p>
           <div style={{ width: 40, height: 1, background: '#2a2520', margin: '24px auto 0' }} />
+          <button
+            onClick={() => navigate('/leaderboard')}
+            style={{
+              marginTop: 20, background: 'none', border: '1px solid #2a2520',
+              borderRadius: 6, color: '#5a4535', fontSize: 12, padding: '8px 20px',
+              cursor: 'pointer', letterSpacing: 2, textTransform: 'uppercase',
+            }}
+          >
+            🏆 Leaderboard
+          </button>
         </div>
 
         {/* Cases */}
