@@ -53,7 +53,7 @@ function Intro({ onDone }) {
         transition: 'opacity 1.2s',
         textShadow: '0 0 80px rgba(139, 115, 85, 0.3)',
       }}>
-        Murder Mystery
+        Suspect Zero : Murder Mystery Game
       </h1>
 
       <p style={{
