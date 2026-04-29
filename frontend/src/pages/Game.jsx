@@ -26,7 +26,7 @@ export default function Game() {
   const chatRef = useRef(null)
 
   useEffect(() => {
-    fetch('/api/cases')
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/cases`)
       .then(r => r.json())
       .then(cases => {
         const found = cases.find(c => c.id === Number(caseId))
@@ -52,7 +52,7 @@ export default function Game() {
     setHistories(prev => ({ ...prev, [selectedSuspect]: newHistory }))
     setQuestionCounts(prev => ({ ...prev, [selectedSuspect]: (prev[selectedSuspect] || 0) + 1 }))
     try {
-      const res = await fetch('/api/interrogate', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/interrogate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caseId: Number(caseId), suspectName: selectedSuspect, question: q, history: newHistory }),
@@ -69,7 +69,7 @@ export default function Game() {
     if (!accusedName || !reasoning.trim()) return
     setLoading(true)
     try {
-      const res = await fetch('/api/accuse', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/accuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caseId: Number(caseId), accusedName, reasoning }),

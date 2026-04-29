@@ -9,7 +9,7 @@ export default function CaseSelect() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetch('/api/cases')
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/cases`)
       .then(r => r.json())
       .then(data => { setCases(data); setLoading(false) })
       .catch(() => setLoading(false))
