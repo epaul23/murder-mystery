@@ -126,11 +126,11 @@ export default function CaseSelect() {
             letterSpacing: 2,
             textShadow: '0 0 60px rgba(139,115,85,0.2)',
           }}>
-            Murder Mystery
+            Suspect Zero
           </h1>
 
           <p style={{ color: '#3a3530', fontSize: 13, letterSpacing: 2, marginBottom: 4 }}>
-            By: EMIL PAUL
+            A game by Emil Paul
           </p>
 
           <p style={{ color: '#4a3f35', fontSize: 14, marginTop: 12 }}>
@@ -252,7 +252,7 @@ export default function CaseSelect() {
 
         {/* Footer */}
         <p style={{ textAlign: 'center', color: '#1a1a15', fontSize: 11, marginTop: '4rem', letterSpacing: 2 }}>
-          POWERED BY GROQ AI — EVERY SUSPECT IS A REAL AI
+          AI-DRIVEN INTERROGATIONS • EVERY SUSPECT CAN LIE
         </p>
       </div>
     </div>
