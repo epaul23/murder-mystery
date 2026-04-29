@@ -2,8 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import Groq from 'groq-sdk';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 const app = express();
 app.use(cors({
@@ -140,4 +146,38 @@ app.post('/api/accuse', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
+
+// Save score to leaderboard
+app.post('/api/leaderboard', async (req, res) => {
+  const { player_name, case_id, case_title, score, questions_used, solved } = req.body;
+  try {
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .insert([{ player_name, case_id, case_title, score, questions_used, solved }]);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save score' });
+  }
+});
+
+// Get leaderboard for a case
+app.get('/api/leaderboard/:caseId', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('leaderboard')
+      .select('*')
+      .eq('case_id', req.params.caseId)
+      .eq('solved', true)
+      .order('score', { ascending: false })
+      .limit(10);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
