@@ -365,6 +365,61 @@ export default function Game() {
               </p>
             </div>
 
+            {/* ── Case rating card ── */}
+            <div style={{ background: '#080808', border: '1px solid #1a1a15', borderRadius: 8, padding: '1rem', marginBottom: 20, textAlign: 'left' }}>
+              <p style={{ fontSize: 12, color: '#3a3530', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Case rating</p>
+
+              {/* Questions used */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: '#6b6055' }}>Questions used</span>
+                  <span style={{ fontSize: 13, color: '#8b7355' }}>{totalQuestions} / {MAX_QUESTIONS}</span>
+                </div>
+                {/* Progress bar */}
+                <div style={{ height: 4, background: '#1a1a15', borderRadius: 2 }}>
+                  <div style={{ height: 4, borderRadius: 2, width: `${(totalQuestions / MAX_QUESTIONS) * 100}%`, background: totalQuestions <= 10 ? '#4ade80' : totalQuestions <= 15 ? '#facc15' : '#f87171', transition: 'width 0.5s' }} />
+                </div>
+              </div>
+
+              {/* Score breakdown */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: '#6b6055' }}>Starting score</span>
+                <span style={{ fontSize: 13, color: '#8b7355' }}>1000</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: '#6b6055' }}>Questions penalty</span>
+                <span style={{ fontSize: 13, color: '#f87171' }}>-{totalQuestions * 20}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={{ fontSize: 13, color: '#6b6055' }}>Accusation</span>
+                <span style={{ fontSize: 13, color: reveal.correct ? '#4ade80' : '#f87171' }}>{reveal.correct ? '+200' : '-200'}</span>
+              </div>
+
+              {/* Final score + rank */}
+              <div style={{ borderTop: '1px solid #2a2520', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 14, color: '#e8e0d0' }}>Final score</span>
+                <span style={{ fontSize: 24, color: '#8b7355', fontFamily: 'Georgia, serif' }}>{reveal.finalScore}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ fontSize: 12, color: '#4a3f35' }}>Rank achieved</span>
+                <span style={{ fontSize: 13, color: getRank(reveal.finalScore || 0).color, fontWeight: 500 }}>
+                  {getRank(reveal.finalScore || 0).label}
+                </span>
+              </div>
+
+              {/* Performance tip */}
+              <div style={{ background: '#0a0a0f', border: '1px solid #1a1a15', borderRadius: 6, padding: '10px 12px' }}>
+                <p style={{ fontSize: 12, color: '#4a3f35', marginBottom: 4 }}>💡 Detective's note</p>
+                <p style={{ fontSize: 12, color: '#6b6055', lineHeight: 1.6 }}>
+                  {reveal.correct && totalQuestions <= 8 && 'Outstanding! You solved it with minimal questions — true master detective instincts.'}
+                  {reveal.correct && totalQuestions > 8 && totalQuestions <= 14 && 'Well done. A thorough investigation — try solving it in fewer questions next time for a higher rank.'}
+                  {reveal.correct && totalQuestions > 14 && 'Case closed, but you used many questions. Try to spot contradictions earlier to improve your rank.'}
+                  {!reveal.correct && 'Wrong accusation. The real killer left clues — go back and look for contradictions in their timeline and alibi.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Action buttons */}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button onClick={() => navigate('/')} style={{ background: 'none', border: '1px solid #2a2520', borderRadius: 8, color: '#8b7355', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Back to cases</button>
               <button onClick={() => { setReveal(null); setAccuseMode(false); setAccusedName(''); setAccusedMethod(''); setAccusedMotive(''); setReasoning(''); }} style={{ background: '#0a1a0a', border: '1px solid #4ade80', borderRadius: 8, color: '#4ade80', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Keep investigating</button>
