@@ -194,6 +194,57 @@ export default function Game() {
         </div>
       )}
 
+      {/* ── Crime scene banner ── */}
+      <div style={{
+        background: 'linear-gradient(180deg, #0d0a08 0%, #050508 100%)',
+        borderBottom: '1px solid #1a1a15',
+        padding: '1.5rem 2rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2rem',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Background texture effect */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 0% 50%, rgba(139,115,85,0.06) 0%, transparent 60%)', pointerEvents: 'none' }} />
+
+        {/* Victim photo placeholder */}
+        <div style={{
+          width: 72, height: 72, borderRadius: 4, flexShrink: 0,
+          background: '#0a0a0f', border: '1px solid #2a2520',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+          position: 'relative',
+        }}>
+          {/* Polaroid X mark */}
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <line x1="4" y1="4" x2="24" y2="24" stroke="#3a2520" strokeWidth="1.5" />
+            <line x1="24" y1="4" x2="4" y2="24" stroke="#3a2520" strokeWidth="1.5" />
+            <rect x="2" y="2" width="24" height="24" rx="2" stroke="#2a2520" strokeWidth="1" fill="none" />
+          </svg>
+          <p style={{ fontSize: 9, color: '#2a2520', letterSpacing: 1 }}>VICTIM</p>
+        </div>
+
+        {/* Case details */}
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <span style={{ fontSize: 10, color: '#5a4535', letterSpacing: 3, textTransform: 'uppercase' }}>Active case</span>
+            <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#f87171', display: 'inline-block', boxShadow: '0 0 6px #f87171' }} />
+          </div>
+          <p style={{ fontSize: 18, color: '#e8e0d0', fontFamily: 'Georgia, serif', marginBottom: 4 }}>
+            Victim: <span style={{ color: '#c8b090' }}>{caseData.victim}</span>
+          </p>
+          <p style={{ fontSize: 13, color: '#4a3f35' }}>{caseData.method}</p>
+        </div>
+
+        {/* Classified stamp */}
+        <div style={{
+          border: '2px solid #3a1515', borderRadius: 4, padding: '4px 12px',
+          transform: 'rotate(-8deg)', flexShrink: 0,
+        }}>
+          <p style={{ fontSize: 11, color: '#5a2525', letterSpacing: 4, textTransform: 'uppercase', fontWeight: 700 }}>Classified</p>
+        </div>
+      </div>
+
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', maxHeight: 'calc(100vh - 60px)' }}>
 
         {/* ── Left sidebar ── */}
