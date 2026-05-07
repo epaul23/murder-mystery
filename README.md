@@ -1,0 +1,17 @@
+# 🔍 Murder Mystery Game
+
+AI-powered murder mystery game. Interrogate AI suspects, find the killer.
+
+> Built by Emil Paul — still in development
+
+## Play
+[murder-mystery-a1kl4i27k-epaul23s-projects.vercel.app](https://murder-mystery-a1kl4i27k-epaul23s-projects.vercel.app)
+
+## Stack
+- React + Vite (Vercel)
+- Node + Express (Railway)
+- Groq AI — free tier
+- Supabase — leaderboard
+
+## Status
+🚧 Work in progress
