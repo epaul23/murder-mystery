@@ -111,49 +111,92 @@ export default function CaseSelect() {
     }}>
       <div style={{ maxWidth: 780, margin: '0 auto' }}>
 
-        {/* Header section (title + subtitle + navigation) */}
-        <div style={{ textAlign: 'center', padding: '4rem 0 3rem' }}>
-          <p style={{ color: '#5a4535', letterSpacing: 6, fontSize: 11, textTransform: 'uppercase', marginBottom: 16 }}>
-            Detective Agency
+       {/* ── Header ── */}
+        <div style={{ textAlign: 'center', padding: '5rem 0 3rem' }}>
+          
+          {/* Top label */}
+          <p style={{
+            color: '#3a3020', letterSpacing: 8, fontSize: 10,
+            textTransform: 'uppercase', marginBottom: 28,
+            fontFamily: 'monospace',
+          }}>
+            Special Investigations Division
           </p>
 
+          {/* Main title */}
           <h1 style={{
-            fontSize: 'clamp(2.5rem, 6vw, 4rem)',
+            fontSize: 'clamp(3rem, 8vw, 5.5rem)',
             color: '#e8e0d0',
             fontWeight: 400,
             fontFamily: 'Georgia, serif',
-            marginBottom: 8,
-            letterSpacing: 2,
-            textShadow: '0 0 60px rgba(139,115,85,0.2)',
+            marginBottom: 0,
+            letterSpacing: 6,
+            lineHeight: 1,
+            textShadow: '0 0 80px rgba(139,115,85,0.15), 0 2px 4px rgba(0,0,0,0.8)',
           }}>
-            Suspect Zero
+            SUSPECT
           </h1>
 
-          <p style={{ color: '#3a3530', fontSize: 13, letterSpacing: 2, marginBottom: 4 }}>
-            A game by Emil Paul
-          </p>
+          {/* Zero — styled differently */}
+          <h1 style={{
+            fontSize: 'clamp(3rem, 8vw, 5.5rem)',
+            color: 'transparent',
+            fontWeight: 400,
+            fontFamily: 'Georgia, serif',
+            marginBottom: 20,
+            letterSpacing: 6,
+            lineHeight: 1,
+            WebkitTextStroke: '1px rgba(139,115,85,0.5)',
+          }}>
+            ZERO
+          </h1>
 
-          <p style={{ color: '#4a3f35', fontSize: 14, marginTop: 12 }}>
-            Choose a case. Interrogate suspects. Find the killer.
-          </p>
+          {/* Thin decorative line with diamond */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ width: 60, height: 1, background: 'linear-gradient(to right, transparent, #3a3020)' }} />
+            <div style={{ width: 5, height: 5, background: '#5a4535', transform: 'rotate(45deg)' }} />
+            <div style={{ width: 60, height: 1, background: 'linear-gradient(to left, transparent, #3a3020)' }} />
+          </div>
 
-          {/* small divider line */}
-          <div style={{ width: 40, height: 1, background: '#2a2520', margin: '24px auto 0' }} />
+          {/* Tagline */}
+          <p style={{
+            color: '#4a3f35', fontSize: 13, letterSpacing: 3,
+            textTransform: 'uppercase', marginBottom: 6,
+            fontFamily: 'monospace',
+          }}>
+            A Game by Emil Paul
+          </p>
+          <p style={{
+            color: '#2a2520', fontSize: 12, letterSpacing: 2,
+            fontStyle: 'italic', marginBottom: 32,
+            fontFamily: 'Georgia, serif',
+          }}>
+            "The truth is never what it seems"
+          </p>
 
           {/* Leaderboard button */}
           <button
             onClick={() => navigate('/leaderboard')}
             style={{
-              marginTop: 20,
               background: 'none',
-              border: '1px solid #2a2520',
-              borderRadius: 6,
-              color: '#5a4535',
-              fontSize: 12,
-              padding: '8px 20px',
+              border: '1px solid #2a2020',
+              borderRadius: 2,
+              color: '#4a3530',
+              fontSize: 10,
+              padding: '8px 24px',
               cursor: 'pointer',
-              letterSpacing: 2,
+              letterSpacing: 4,
               textTransform: 'uppercase',
+              fontFamily: 'monospace',
+              transition: 'all 0.3s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = '#8b7355'
+              e.currentTarget.style.color = '#8b7355'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = '#2a2020'
+              e.currentTarget.style.color = '#4a3530'
             }}
           >
             🏆 Leaderboard
