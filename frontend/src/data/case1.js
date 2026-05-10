@@ -48,7 +48,7 @@ export const case1Briefing = [
     tag: null,
   },
   {
-    image: '/cases/case1/manor.png',
+    image: '/cases/case1/scene.png',  // ← change this line
     layout: 'cinematic',
     overlay: 0.75,
     eyebrow: 'Your Assignment',
