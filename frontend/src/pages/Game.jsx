@@ -18,7 +18,7 @@ const AVATAR_COLORS = [
 
 // Background image per case
 const CASE_BG = {
-  1: '/cases/case1/manor.png',
+  1: '/cases/case1/bg1.png',
   2: '/cases/case2/train.png',
   3: '/cases/case3/office.png',
 }
