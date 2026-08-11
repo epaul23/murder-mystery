@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const DIFF_COLOR = { easy: '#4ade80', medium: '#facc15', hard: '#f87171' }
@@ -13,41 +13,69 @@ const CASE_IMAGES = {
 // Intro animation — plays once per session
 function Intro({ onDone }) {
   const [phase, setPhase] = useState(0)
+  const [exiting, setExiting] = useState(false)
+  const finishingRef = useRef(false)
+
+  const finishIntro = () => {
+    if (finishingRef.current) return
+    finishingRef.current = true
+    setExiting(true)
+    setTimeout(onDone, 750)
+  }
 
   useEffect(() => {
     const timers = [
-      setTimeout(() => setPhase(1), 500),
-      setTimeout(() => setPhase(2), 1800),
-      setTimeout(() => setPhase(3), 3200),
-      setTimeout(() => setPhase(4), 4500),
-      setTimeout(() => onDone(), 5500),
+      setTimeout(() => setPhase(1), 180),
+      setTimeout(() => setPhase(2), 850),
+      setTimeout(() => setPhase(3), 1550),
+      setTimeout(finishIntro, 3900),
     ]
     return () => timers.forEach(clearTimeout)
   }, [])
 
   return (
-    <div style={{
-      minHeight: '100vh', background: '#000',
+    <div className="cinematic-intro" style={{
+      minHeight: '100vh',
+      backgroundImage: 'url(/cases/bg-v2.png)',
+      backgroundSize: 'cover', backgroundPosition: 'center',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexDirection: 'column', gap: 24,
-      transition: 'opacity 1s', opacity: phase === 4 ? 0 : 1,
+      flexDirection: 'column', gap: 18, position: 'relative', overflow: 'hidden',
+      transition: 'opacity 750ms ease, filter 750ms ease',
+      opacity: exiting ? 0 : 1, filter: exiting ? 'blur(5px)' : 'blur(0)',
     }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(2,3,5,.88), rgba(7,6,5,.70) 50%, rgba(2,3,5,.86))' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, rgba(160,120,75,.12), transparent 42%)' }} />
+
       <p style={{
-        fontSize: 13, letterSpacing: 8, color: '#5a4535',
-        textTransform: 'uppercase',
-        opacity: phase >= 1 ? 1 : 0, transition: 'opacity 1.2s',
-      }}>Detective Agency</p>
+        position: 'relative', fontSize: 11, letterSpacing: 9, color: '#a78660',
+        textTransform: 'uppercase', fontFamily: "'Special Elite', monospace",
+        opacity: phase >= 1 ? 1 : 0, transform: phase >= 1 ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity 900ms ease, transform 900ms ease',
+      }}>Special Investigations Division</p>
+
+      <div style={{
+        position: 'relative', height: 1, width: phase >= 1 ? 190 : 0,
+        background: 'linear-gradient(90deg, transparent, #9b7650, transparent)',
+        transition: 'width 1.2s ease',
+      }} />
+
       <h1 style={{
-        fontSize: 'clamp(3rem, 10vw, 6rem)', color: '#e8e0d0',
-        fontWeight: 400, fontFamily: 'Georgia, serif', margin: 0,
-        opacity: phase >= 2 ? 1 : 0, transition: 'opacity 1.2s',
-        textShadow: '0 0 80px rgba(139, 115, 85, 0.3)',
+        position: 'relative', fontSize: 'clamp(3.6rem, 10vw, 7.5rem)', color: '#f1e8d8',
+        fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif", margin: 0,
+        letterSpacing: 'clamp(3px, 1vw, 12px)', lineHeight: .95,
+        opacity: phase >= 2 ? 1 : 0, transform: phase >= 2 ? 'scale(1)' : 'scale(.94)',
+        transition: 'opacity 1.1s ease, transform 1.4s cubic-bezier(.2,.8,.2,1)',
+        textShadow: '0 8px 45px rgba(0,0,0,.9), 0 0 70px rgba(170,125,75,.22)',
       }}>Suspect Zero</h1>
+
       <p style={{
-        fontSize: 14, color: '#3a3530', letterSpacing: 3,
-        opacity: phase >= 3 ? 1 : 0, transition: 'opacity 1.2s',
+        position: 'relative', fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: '#aa9680', letterSpacing: 4,
+        fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: 'italic',
+        opacity: phase >= 3 ? 1 : 0, transform: phase >= 3 ? 'translateY(0)' : 'translateY(8px)',
+        transition: 'opacity 1s ease, transform 1s ease',
       }}>The truth is never what it seems</p>
-      <button onClick={onDone} style={{ position: 'absolute', right: 24, bottom: 24, background: 'none', border: '1px solid #2a2520', color: '#5a4535', padding: '8px 14px', cursor: 'pointer', letterSpacing: 2 }}>Skip intro</button>
+
+      <button onClick={finishIntro} style={{ position: 'absolute', zIndex: 2, right: 24, bottom: 24, background: 'rgba(0,0,0,.28)', border: '1px solid #604b36', color: '#a78660', padding: '9px 15px', cursor: 'pointer', letterSpacing: 2, fontFamily: "'Special Elite', monospace", fontSize: 10 }}>Skip intro</button>
     </div>
   )
 }
@@ -121,7 +149,7 @@ export default function CaseSelect() {
 
           <h1 style={{
             fontSize: 'clamp(3rem, 8vw, 5.5rem)', color: '#e8e0d0',
-            fontWeight: 400, fontFamily: 'Georgia, serif',
+            fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif",
             marginBottom: 0, letterSpacing: 10, lineHeight: 1,
             textShadow: '0 0 60px rgba(139,115,85,0.2)',
           }}>SUSPECT</h1>
@@ -129,7 +157,7 @@ export default function CaseSelect() {
           <h1 style={{
             fontSize: 'clamp(3rem, 8vw, 5.5rem)',
             color: 'transparent',
-            fontWeight: 400, fontFamily: 'Georgia, serif',
+            fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif",
             marginBottom: 20, letterSpacing: 10, lineHeight: 1,
             WebkitTextStroke: '1px rgba(139,115,85,0.6)',
           }}>ZERO</h1>
@@ -144,7 +172,7 @@ export default function CaseSelect() {
           <p style={{ color: '#4a3f35', fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', marginBottom: 4, fontFamily: 'monospace' }}>
             A Game by Emil Paul
           </p>
-          <p style={{ color: '#2a2520', fontSize: 13, letterSpacing: 2, fontStyle: 'italic', marginBottom: 36, fontFamily: 'Georgia, serif' }}>
+          <p style={{ color: '#6b5b49', fontSize: 15, letterSpacing: 2, fontStyle: 'italic', marginBottom: 36, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
             "The truth is never what it seems"
           </p>
 
