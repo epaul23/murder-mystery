@@ -47,6 +47,7 @@ function Intro({ onDone }) {
         fontSize: 14, color: '#3a3530', letterSpacing: 3,
         opacity: phase >= 3 ? 1 : 0, transition: 'opacity 1.2s',
       }}>The truth is never what it seems</p>
+      <button onClick={onDone} style={{ position: 'absolute', right: 24, bottom: 24, background: 'none', border: '1px solid #2a2520', color: '#5a4535', padding: '8px 14px', cursor: 'pointer', letterSpacing: 2 }}>Skip intro</button>
     </div>
   )
 }
@@ -54,16 +55,24 @@ function Intro({ onDone }) {
 export default function CaseSelect() {
   const [cases, setCases] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
   const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('introSeen'))
   const [hoveredId, setHoveredId] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
+    setLoading(true)
+    setError('')
     fetch(`${import.meta.env.VITE_API_URL || ''}/api/cases`)
-      .then(r => r.json())
+      .then(async response => {
+        const data = await response.json().catch(() => null)
+        if (!response.ok || !Array.isArray(data)) throw new Error('Could not load case files')
+        return data
+      })
       .then(data => { setCases(data); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [])
+      .catch(err => { setError(err.message); setLoading(false) })
+  }, [reloadKey])
 
   if (showIntro) return (
     <Intro onDone={() => {
@@ -76,7 +85,7 @@ export default function CaseSelect() {
     <div style={{
       minHeight: '100vh',
       // ── Background image — replace bg.png with your detective desk image
-      backgroundImage: 'url(/cases/bg.png)',
+      backgroundImage: 'url(/cases/bg-v2.png)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundAttachment: 'fixed',
@@ -86,14 +95,14 @@ export default function CaseSelect() {
       {/* Dark overlay so text is readable */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.88) 40%, rgba(0,0,0,0.95) 100%)',
+        background: 'linear-gradient(180deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.66) 42%, rgba(0,0,0,0.82) 100%)',
         pointerEvents: 'none',
       }} />
 
       {/* Vignette */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)',
+        background: 'radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.48) 100%)',
         pointerEvents: 'none',
       }} />
 
@@ -163,12 +172,21 @@ export default function CaseSelect() {
           <p style={{ textAlign: 'center', color: '#3a3530', letterSpacing: 2, fontSize: 12 }}>
             LOADING CASE FILES...
           </p>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p role="alert" style={{ color: '#f87171', marginBottom: 16 }}>{error}</p>
+            <button onClick={() => setReloadKey(key => key + 1)} style={{ background: 'none', border: '1px solid #5a4535', color: '#8b7355', padding: '10px 18px', cursor: 'pointer' }}>Try again</button>
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {cases.map((c, i) => (
               <div
                 key={c.id}
+                className="case-card"
+                role="button"
+                tabIndex={0}
                 onClick={() => navigate(`/case/${c.id}`)}
+                onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && navigate(`/case/${c.id}`)}
                 onMouseEnter={() => setHoveredId(c.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
