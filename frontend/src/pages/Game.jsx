@@ -8,6 +8,16 @@ const DIFF_COLOR = { easy: '#4ade80', medium: '#facc15', hard: '#f87171' }
 // Max questions allowed per case
 const MAX_QUESTIONS = 20
 
+const METHOD_OPTIONS = ['Poison', 'Stabbing', 'Suffocation', 'Blunt force', 'Sedatives', 'Other']
+const MOTIVE_OPTIONS = ['Blackmail', 'Revenge', 'Financial gain', 'Jealousy', 'Self-protection', 'Other']
+
+async function requestJson(url, options) {
+  const response = await fetch(url, options)
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.error || 'Request failed')
+  return data
+}
+
 // Avatar colors for each suspect
 const AVATAR_COLORS = [
   { bg: '#2a1a3a', text: '#9f7aea' },
@@ -19,6 +29,12 @@ const AVATAR_COLORS = [
 // Background image per case
 const CASE_BG = {
   1: '/cases/case1/bg1.png',
+  2: '/cases/case2/train.png',
+  3: '/cases/case3/office.png',
+}
+
+const CASE_VICTIM_IMAGE = {
+  1: '/cases/case1/victim.png',
   2: '/cases/case2/train.png',
   3: '/cases/case3/office.png',
 }
@@ -41,6 +57,7 @@ export default function Game() {
   const [histories, setHistories] = useState({})
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState('')
 
   // Show briefing before game starts
   const [showBriefing, setShowBriefing] = useState(true)
@@ -57,6 +74,9 @@ export default function Game() {
 
   // Results
   const [reveal, setReveal] = useState(null)
+  const [playerName, setPlayerName] = useState('')
+  const [saveStatus, setSaveStatus] = useState('idle')
+  const [saveMessage, setSaveMessage] = useState('')
 
   // Scoring
   const [questionCounts, setQuestionCounts] = useState({})
@@ -71,10 +91,11 @@ export default function Game() {
 
   // Load case data on mount
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/cases`)
-      .then(r => r.json())
+    setLoadError('')
+    requestJson(`${import.meta.env.VITE_API_URL || ''}/api/cases`)
       .then(cases => {
         const found = cases.find(c => c.id === Number(caseId))
+        if (!found) throw new Error('Case not found')
         setCaseData(found)
         if (found) {
           const init = {}
@@ -82,6 +103,7 @@ export default function Game() {
           setHistories(init)
         }
       })
+      .catch(error => setLoadError(error.message || 'Could not load this case'))
   }, [caseId])
 
   // Auto-scroll chat to bottom
@@ -98,21 +120,35 @@ export default function Game() {
     setInput('')
     setLoading(true)
 
-    const newHistory = [...(histories[selectedSuspect] || []), { role: 'user', content: q }]
+    const previousHistory = histories[selectedSuspect] || []
+    const previousReplies = previousHistory
+      .filter(message => message.role === 'assistant' && typeof message.content === 'string')
+      .slice(-4)
+      .map(message => message.content)
+    const suspectTurn = (questionCounts[selectedSuspect] || 0) + 1
+    const newHistory = [...previousHistory, { role: 'user', content: q }]
     setHistories(prev => ({ ...prev, [selectedSuspect]: newHistory }))
     setQuestionCounts(prev => ({ ...prev, [selectedSuspect]: (prev[selectedSuspect] || 0) + 1 }))
     setScore(prev => Math.max(prev - 20, 0))
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/interrogate`, {
+      const data = await requestJson(`${import.meta.env.VITE_API_URL || ''}/api/interrogate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caseId: Number(caseId), suspectName: selectedSuspect, question: q, history: newHistory }),
+        body: JSON.stringify({
+          caseId: Number(caseId),
+          suspectName: selectedSuspect,
+          question: q,
+          suspectTurn,
+          previousReplies,
+        }),
       })
-      const data = await res.json()
+      if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('The suspect did not answer. Try again.')
       setHistories(prev => ({ ...prev, [selectedSuspect]: [...newHistory, { role: 'assistant', content: data.reply }] }))
-    } catch {
-      setHistories(prev => ({ ...prev, [selectedSuspect]: [...newHistory, { role: 'assistant', content: 'The suspect stares at you silently.' }] }))
+    } catch (error) {
+      setHistories(prev => ({ ...prev, [selectedSuspect]: [...newHistory, { role: 'assistant', content: error.message || 'The interrogation could not continue. Try again.' }] }))
+      setQuestionCounts(prev => ({ ...prev, [selectedSuspect]: Math.max((prev[selectedSuspect] || 1) - 1, 0) }))
+      setScore(prev => Math.min(prev + 20, 1000))
     }
     setLoading(false)
   }
@@ -120,45 +156,58 @@ export default function Game() {
   // Submit final accusation
   const submitAccusation = async () => {
     if (!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim()) return
+    setSaveMessage('')
     setLoading(true)
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/accuse`, {
+      const data = await requestJson(`${import.meta.env.VITE_API_URL || ''}/api/accuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ caseId: Number(caseId), accusedName, accusedMethod, accusedMotive, reasoning }),
       })
-      const data = await res.json()
+      if (typeof data.correct !== 'boolean' || typeof data.reveal !== 'string') throw new Error('The case result was incomplete. Try again.')
       const finalScore = data.correct ? Math.max(score + 200, 0) : Math.max(score - 200, 0)
       setScore(finalScore)
       setReveal({ ...data, finalScore })
-
-      if (data.correct) {
-        const name = prompt('🎉 Case solved! Enter your name for the leaderboard:')
-        if (name && name.trim()) {
-          await fetch(`${import.meta.env.VITE_API_URL || ''}/api/leaderboard`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              player_name: name.trim(),
-              case_id: Number(caseId),
-              case_title: caseData.title,
-              score: finalScore,
-              questions_used: totalQuestions,
-              solved: true,
-            }),
-          })
-        }
-      }
-    } catch {
-      setReveal({ correct: false, reveal: 'Something went wrong. Try again.' })
+    } catch (error) {
+      setSaveMessage(error.message || 'Something went wrong. Try again.')
     }
     setLoading(false)
+  }
+
+  const saveScore = async () => {
+    if (!reveal?.correct || !playerName.trim() || saveStatus === 'saving') return
+    setSaveStatus('saving')
+    setSaveMessage('')
+    try {
+      await requestJson(`${import.meta.env.VITE_API_URL || ''}/api/leaderboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player_name: playerName.trim(),
+          case_id: Number(caseId),
+          case_title: caseData.title,
+          score: reveal.finalScore,
+          questions_used: totalQuestions,
+          solved: true,
+        }),
+      })
+      setSaveStatus('saved')
+      setSaveMessage('Score saved to the leaderboard.')
+    } catch (error) {
+      setSaveStatus('error')
+      setSaveMessage(error.message || 'Could not save your score.')
+    }
   }
 
   // Loading state
   if (!caseData) return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#6b6055' }}>Loading case file...</p>
+      {loadError ? (
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#f87171', marginBottom: 16 }}>{loadError}</p>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: '1px solid #2a2520', color: '#8b7355', padding: '10px 18px', cursor: 'pointer' }}>Back to cases</button>
+        </div>
+      ) : <p style={{ color: '#6b6055' }}>Loading case file...</p>}
     </div>
   )
 
@@ -194,7 +243,7 @@ export default function Game() {
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100vh' }}>
 
         {/* ── Header bar ── */}
-        <div style={{ background: 'rgba(10,10,8,0.95)', borderBottom: '1px solid #1a1a15', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="game-header" style={{ background: 'rgba(10,10,8,0.95)', borderBottom: '1px solid #1a1a15', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#5a4535', cursor: 'pointer', fontSize: 14 }}>← Cases</button>
           <div style={{ textAlign: 'center' }}>
             <h1 style={{ fontSize: 15, fontWeight: 400, color: '#e8e0d0' }}>{caseData.title}</h1>
@@ -227,7 +276,7 @@ export default function Game() {
         )}
 
         {/* ── Crime scene banner ── */}
-        <div style={{
+        <div className="crime-banner" style={{
           background: 'rgba(13,10,8,0.92)', borderBottom: '1px solid #1a1a15',
           padding: '1.25rem 2rem', display: 'flex', alignItems: 'center',
           gap: '2rem', position: 'relative', overflow: 'hidden',
@@ -237,7 +286,7 @@ export default function Game() {
           {/* Victim photo */}
           <div style={{
             width: 64, height: 64, borderRadius: 4, flexShrink: 0,
-            backgroundImage: `url(/cases/case${caseId}/victim.png)`,
+            backgroundImage: `url(${CASE_VICTIM_IMAGE[Number(caseId)] || bg})`,
             backgroundSize: 'cover', backgroundPosition: 'center top',
             border: '1px solid #2a2520',
           }} />
@@ -259,10 +308,10 @@ export default function Game() {
         </div>
 
         {/* ── Main content area ── */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', maxHeight: 'calc(100vh - 180px)' }}>
+        <div className="game-main" style={{ flex: 1, display: 'flex', overflow: 'hidden', maxHeight: 'calc(100vh - 180px)' }}>
 
           {/* ── Left sidebar ── */}
-          <div style={{ width: 220, background: 'rgba(13,13,10,0.95)', borderRight: '1px solid #1a1a15', padding: '1rem', overflowY: 'auto', flexShrink: 0 }}>
+          <div className="suspect-sidebar" style={{ width: 220, background: 'rgba(13,13,10,0.95)', borderRight: '1px solid #1a1a15', padding: '1rem', overflowY: 'auto', flexShrink: 0 }}>
             <p style={{ fontSize: 11, color: '#3a3530', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Suspects</p>
 
             {caseData.suspectNames.map((name, i) => {
@@ -285,7 +334,7 @@ export default function Game() {
             {/* Notes */}
             <div style={{ borderTop: '1px solid #1a1a15', marginTop: 16, paddingTop: 16 }}>
               <p style={{ fontSize: 11, color: '#3a3530', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 }}>Your notes</p>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Jot down clues..." style={{ width: '100%', background: '#0a0a0f', border: '1px solid #1a1a15', borderRadius: 6, color: '#8b7355', fontSize: 12, padding: 8, resize: 'none', height: 100, fontFamily: 'Georgia, serif' }} />
+              <textarea value={notes} maxLength={2000} onChange={e => setNotes(e.target.value)} placeholder="Jot down clues..." style={{ width: '100%', background: '#0a0a0f', border: '1px solid #1a1a15', borderRadius: 6, color: '#8b7355', fontSize: 12, padding: 8, resize: 'none', height: 100, fontFamily: 'Georgia, serif' }} />
             </div>
 
             {/* Accusation button */}
@@ -295,7 +344,7 @@ export default function Game() {
           </div>
 
           {/* ── Chat area ── */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="chat-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {!selectedSuspect ? (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
                 <p style={{ color: '#3a3530', fontSize: 16 }}>Select a suspect to begin interrogation</p>
@@ -330,6 +379,7 @@ export default function Game() {
                 <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid #1a1a15', display: 'flex', gap: 8, background: 'rgba(10,10,8,0.7)' }}>
                   <input
                     value={input}
+                    maxLength={500}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && sendQuestion()}
                     placeholder={questionsLeft === 0 ? 'No questions left — make your accusation!' : `Ask ${selectedSuspect} something...`}
@@ -351,7 +401,7 @@ export default function Game() {
               <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Score: <span style={{ color: '#8b7355' }}>{score} pts</span> — Correct adds 200pts</p>
 
               <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Who killed them?</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+              <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
                 {caseData.suspectNames.map(name => (
                   <button key={name} onClick={() => setAccusedName(name)} style={{ background: accusedName === name ? '#2a0a0a' : '#0a0a0f', border: accusedName === name ? '1px solid #f87171' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedName === name ? '#f87171' : '#8b7355', fontSize: 13 }}>
                     {name}
@@ -360,8 +410,8 @@ export default function Game() {
               </div>
 
               <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>What was the method?</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-                {['Poison', 'Stabbing', 'Suffocation', 'Blunt force', 'Sedatives', 'Other'].map(method => (
+              <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+                {METHOD_OPTIONS.map(method => (
                   <button key={method} onClick={() => setAccusedMethod(method)} style={{ background: accusedMethod === method ? '#1a0a2a' : '#0a0a0f', border: accusedMethod === method ? '1px solid #9f7aea' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedMethod === method ? '#9f7aea' : '#8b7355', fontSize: 13 }}>
                     {method}
                   </button>
@@ -369,8 +419,8 @@ export default function Game() {
               </div>
 
               <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>What was the motive?</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-                {['Blackmail', 'Revenge', 'Financial gain', 'Jealousy', 'Self-protection', 'Other'].map(motive => (
+              <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+                {MOTIVE_OPTIONS.map(motive => (
                   <button key={motive} onClick={() => setAccusedMotive(motive)} style={{ background: accusedMotive === motive ? '#0a1a0a' : '#0a0a0f', border: accusedMotive === motive ? '1px solid #4ade80' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedMotive === motive ? '#4ade80' : '#8b7355', fontSize: 13 }}>
                     {motive}
                   </button>
@@ -378,9 +428,11 @@ export default function Game() {
               </div>
 
               <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Which clue proves it?</p>
-              <textarea value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="What key contradiction or evidence proves your accusation?" style={{ width: '100%', background: '#0a0a0f', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', fontSize: 13, padding: 12, resize: 'none', height: 70, fontFamily: 'Georgia, serif', marginBottom: 16 }} />
+              <textarea value={reasoning} maxLength={1000} onChange={e => setReasoning(e.target.value)} placeholder="What key contradiction or evidence proves your accusation?" style={{ width: '100%', background: '#0a0a0f', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', fontSize: 13, padding: 12, resize: 'none', height: 70, fontFamily: 'Georgia, serif', marginBottom: 16 }} />
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              {saveMessage && !reveal && <p role="alert" style={{ color: '#f87171', fontSize: 12, marginBottom: 12 }}>{saveMessage}</p>}
+
+              <div className="modal-actions" style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setAccuseMode(false)} style={{ flex: 1, background: 'none', border: '1px solid #2a2520', borderRadius: 8, color: '#6b6055', fontSize: 14, padding: 12, cursor: 'pointer' }}>Cancel</button>
                 <button onClick={submitAccusation} disabled={!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim() || loading} style={{ flex: 1, background: '#2a0a0a', border: '1px solid #f87171', borderRadius: 8, color: '#f87171', fontSize: 14, padding: 12, cursor: 'pointer', opacity: (!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim()) ? 0.4 : 1 }}>
                   {loading ? 'Revealing...' : 'Accuse'}
@@ -398,6 +450,12 @@ export default function Game() {
                 {reveal.correct ? 'Case solved' : 'Wrong accusation'}
               </p>
               <p style={{ fontSize: 15, color: '#e8e0d0', lineHeight: 1.8, marginBottom: 20, fontStyle: 'italic' }}>{reveal.reveal}</p>
+
+              {reveal.verdict && !reveal.correct && (
+                <p style={{ fontSize: 12, color: '#6b6055', marginBottom: 16 }}>
+                  Suspect: {reveal.verdict.nameCorrect ? 'correct' : 'incorrect'} · Method: {reveal.verdict.methodCorrect ? 'correct' : 'incorrect'} · Motive: {reveal.verdict.motiveCorrect ? 'correct' : 'incorrect'}
+                </p>
+              )}
 
               {/* Score breakdown */}
               <div style={{ background: '#080808', border: '1px solid #1a1a15', borderRadius: 8, padding: '1rem', marginBottom: 20, textAlign: 'left' }}>
@@ -446,9 +504,30 @@ export default function Game() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              {reveal.correct && (
+                <div style={{ marginBottom: 20 }}>
+                  <p style={{ color: '#6b6055', fontSize: 12, marginBottom: 8 }}>Add your result to the leaderboard</p>
+                  <div className="modal-actions" style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      aria-label="Detective name"
+                      value={playerName}
+                      onChange={event => setPlayerName(event.target.value.slice(0, 30))}
+                      onKeyDown={event => event.key === 'Enter' && saveScore()}
+                      placeholder="Detective name"
+                      disabled={saveStatus === 'saving' || saveStatus === 'saved'}
+                      style={{ flex: 1, minWidth: 0, background: '#080808', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', padding: '10px 12px' }}
+                    />
+                    <button onClick={saveScore} disabled={!playerName.trim() || saveStatus === 'saving' || saveStatus === 'saved'} style={{ background: '#0a1a0a', border: '1px solid #4ade80', borderRadius: 8, color: '#4ade80', padding: '10px 16px', cursor: 'pointer', opacity: !playerName.trim() || saveStatus === 'saving' || saveStatus === 'saved' ? 0.5 : 1 }}>
+                      {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save score'}
+                    </button>
+                  </div>
+                  {saveMessage && <p role="status" style={{ color: saveStatus === 'saved' ? '#4ade80' : '#f87171', fontSize: 12, marginTop: 8 }}>{saveMessage}</p>}
+                </div>
+              )}
+
+              <div className="modal-actions" style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                 <button onClick={() => navigate('/')} style={{ background: 'none', border: '1px solid #2a2520', borderRadius: 8, color: '#8b7355', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Back to cases</button>
-                <button onClick={() => { setReveal(null); setAccuseMode(false); setAccusedName(''); setAccusedMethod(''); setAccusedMotive(''); setReasoning('') }} style={{ background: '#0a1a0a', border: '1px solid #4ade80', borderRadius: 8, color: '#4ade80', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>Keep investigating</button>
+                <button onClick={() => navigate('/leaderboard')} style={{ background: '#0a1a0a', border: '1px solid #4ade80', borderRadius: 8, color: '#4ade80', fontSize: 14, padding: '10px 24px', cursor: 'pointer' }}>View leaderboard</button>
               </div>
             </div>
           </div>
