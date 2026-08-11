@@ -36,7 +36,7 @@ function Intro({ onDone }) {
   return (
     <div className="cinematic-intro" style={{
       minHeight: '100vh',
-      backgroundImage: 'url(/cases/bg-v2.png)',
+      backgroundImage: 'url(/cases/intro-bg.png)',
       backgroundSize: 'cover', backgroundPosition: 'center',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexDirection: 'column', gap: 18, position: 'relative', overflow: 'hidden',
