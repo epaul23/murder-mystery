@@ -8,9 +8,6 @@ const DIFF_COLOR = { easy: '#4ade80', medium: '#facc15', hard: '#f87171' }
 // Max questions allowed per case
 const MAX_QUESTIONS = 20
 
-const METHOD_OPTIONS = ['Poison', 'Stabbing', 'Suffocation', 'Blunt force', 'Sedatives', 'Other']
-const MOTIVE_OPTIONS = ['Blackmail', 'Revenge', 'Financial gain', 'Jealousy', 'Self-protection', 'Other']
-
 async function requestJson(url, options) {
   const response = await fetch(url, options)
   const data = await response.json().catch(() => ({}))
@@ -68,8 +65,6 @@ export default function Game() {
   // Accusation state
   const [accuseMode, setAccuseMode] = useState(false)
   const [accusedName, setAccusedName] = useState('')
-  const [accusedMethod, setAccusedMethod] = useState('')
-  const [accusedMotive, setAccusedMotive] = useState('')
   const [reasoning, setReasoning] = useState('')
 
   // Results
@@ -155,17 +150,17 @@ export default function Game() {
 
   // Submit final accusation
   const submitAccusation = async () => {
-    if (!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim()) return
+    if (!accusedName || reasoning.trim().length < 20) return
     setSaveMessage('')
     setLoading(true)
     try {
       const data = await requestJson(`${import.meta.env.VITE_API_URL || ''}/api/accuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caseId: Number(caseId), accusedName, accusedMethod, accusedMotive, reasoning }),
+        body: JSON.stringify({ caseId: Number(caseId), accusedName, reasoning }),
       })
-      if (typeof data.correct !== 'boolean' || typeof data.reveal !== 'string') throw new Error('The case result was incomplete. Try again.')
-      const finalScore = data.correct ? Math.max(score + 200, 0) : Math.max(score - 200, 0)
+      if (typeof data.correct !== 'boolean' || typeof data.reveal !== 'string' || !Number.isInteger(data.scoreAdjustment)) throw new Error('The case result was incomplete. Try again.')
+      const finalScore = Math.max(score + data.scoreAdjustment, 0)
       setScore(finalScore)
       setReveal({ ...data, finalScore })
     } catch (error) {
@@ -188,6 +183,7 @@ export default function Game() {
           case_title: caseData.title,
           score: reveal.finalScore,
           questions_used: totalQuestions,
+          evidence_score: reveal.evidenceScore,
           solved: true,
         }),
       })
@@ -398,7 +394,7 @@ export default function Game() {
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', overflowY: 'auto', zIndex: 50 }}>
             <div style={{ background: '#0d0d0a', border: '1px solid #2a1515', borderRadius: 12, padding: '2rem', maxWidth: 500, width: '100%', margin: 'auto' }}>
               <h2 style={{ fontSize: 20, fontWeight: 400, color: '#e8e0d0', marginBottom: 4 }}>Make your accusation</h2>
-              <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Score: <span style={{ color: '#8b7355' }}>{score} pts</span> — Correct adds 200pts</p>
+              <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Score: <span style={{ color: '#8b7355' }}>{score} pts</span> — Strong evidence can add up to 200 pts</p>
 
               <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Who killed them?</p>
               <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
@@ -409,32 +405,15 @@ export default function Game() {
                 ))}
               </div>
 
-              <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>What was the method?</p>
-              <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-                {METHOD_OPTIONS.map(method => (
-                  <button key={method} onClick={() => setAccusedMethod(method)} style={{ background: accusedMethod === method ? '#1a0a2a' : '#0a0a0f', border: accusedMethod === method ? '1px solid #9f7aea' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedMethod === method ? '#9f7aea' : '#8b7355', fontSize: 13 }}>
-                    {method}
-                  </button>
-                ))}
-              </div>
-
-              <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>What was the motive?</p>
-              <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-                {MOTIVE_OPTIONS.map(motive => (
-                  <button key={motive} onClick={() => setAccusedMotive(motive)} style={{ background: accusedMotive === motive ? '#0a1a0a' : '#0a0a0f', border: accusedMotive === motive ? '1px solid #4ade80' : '1px solid #2a2520', borderRadius: 8, padding: '10px', cursor: 'pointer', color: accusedMotive === motive ? '#4ade80' : '#8b7355', fontSize: 13 }}>
-                    {motive}
-                  </button>
-                ))}
-              </div>
-
-              <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Which clue proves it?</p>
-              <textarea value={reasoning} maxLength={1000} onChange={e => setReasoning(e.target.value)} placeholder="What key contradiction or evidence proves your accusation?" style={{ width: '100%', background: '#0a0a0f', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', fontSize: 13, padding: 12, resize: 'none', height: 70, fontFamily: 'Georgia, serif', marginBottom: 16 }} />
+              <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Explain the evidence</p>
+              <textarea value={reasoning} maxLength={1000} onChange={e => setReasoning(e.target.value)} placeholder="Connect the timeline, opportunity, motive, or contradictions that prove your accusation..." style={{ width: '100%', background: '#0a0a0f', border: '1px solid #2a2520', borderRadius: 8, color: '#e8e0d0', fontSize: 13, padding: 12, resize: 'none', height: 100, fontFamily: 'Georgia, serif', marginBottom: 6 }} />
+              <p style={{ fontSize: 11, color: reasoning.trim().length >= 20 ? '#4a6a4a' : '#4a3f35', marginBottom: 16 }}>{reasoning.trim().length} / 20 minimum characters</p>
 
               {saveMessage && !reveal && <p role="alert" style={{ color: '#f87171', fontSize: 12, marginBottom: 12 }}>{saveMessage}</p>}
 
               <div className="modal-actions" style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setAccuseMode(false)} style={{ flex: 1, background: 'none', border: '1px solid #2a2520', borderRadius: 8, color: '#6b6055', fontSize: 14, padding: 12, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={submitAccusation} disabled={!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim() || loading} style={{ flex: 1, background: '#2a0a0a', border: '1px solid #f87171', borderRadius: 8, color: '#f87171', fontSize: 14, padding: 12, cursor: 'pointer', opacity: (!accusedName || !accusedMethod || !accusedMotive || !reasoning.trim()) ? 0.4 : 1 }}>
+                <button onClick={submitAccusation} disabled={!accusedName || reasoning.trim().length < 20 || loading} style={{ flex: 1, background: '#2a0a0a', border: '1px solid #f87171', borderRadius: 8, color: '#f87171', fontSize: 14, padding: 12, cursor: 'pointer', opacity: (!accusedName || reasoning.trim().length < 20) ? 0.4 : 1 }}>
                   {loading ? 'Revealing...' : 'Accuse'}
                 </button>
               </div>
@@ -450,12 +429,6 @@ export default function Game() {
                 {reveal.correct ? 'Case solved' : 'Wrong accusation'}
               </p>
               <p style={{ fontSize: 15, color: '#e8e0d0', lineHeight: 1.8, marginBottom: 20, fontStyle: 'italic' }}>{reveal.reveal}</p>
-
-              {reveal.verdict && !reveal.correct && (
-                <p style={{ fontSize: 12, color: '#6b6055', marginBottom: 16 }}>
-                  Suspect: {reveal.verdict.nameCorrect ? 'correct' : 'incorrect'} · Method: {reveal.verdict.methodCorrect ? 'correct' : 'incorrect'} · Motive: {reveal.verdict.motiveCorrect ? 'correct' : 'incorrect'}
-                </p>
-              )}
 
               {/* Score breakdown */}
               <div style={{ background: '#080808', border: '1px solid #1a1a15', borderRadius: 8, padding: '1rem', marginBottom: 20, textAlign: 'left' }}>
@@ -480,9 +453,16 @@ export default function Game() {
                   <span style={{ fontSize: 13, color: '#f87171' }}>-{totalQuestions * 20}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 13, color: '#6b6055' }}>Accusation</span>
-                  <span style={{ fontSize: 13, color: reveal.correct ? '#4ade80' : '#f87171' }}>{reveal.correct ? '+200' : '-200'}</span>
+                  <span style={{ fontSize: 13, color: '#6b6055' }}>{reveal.correct ? 'Evidence bonus' : 'Wrong accusation'}</span>
+                  <span style={{ fontSize: 13, color: reveal.correct ? '#4ade80' : '#f87171' }}>{reveal.correct ? `+${reveal.evidenceScore}` : '-200'}</span>
                 </div>
+
+                {reveal.correct && Array.isArray(reveal.evidenceFound) && (
+                  <div style={{ background: '#0a0a0f', border: '1px solid #1a1a15', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
+                    <p style={{ fontSize: 12, color: '#4ade80', marginBottom: 6 }}>Evidence recognized: {reveal.evidenceScore} / 200</p>
+                    <p style={{ fontSize: 12, color: '#6b6055', lineHeight: 1.6 }}>{reveal.evidenceFound.length ? reveal.evidenceFound.join(' · ') : 'Correct killer, but the explanation did not connect a key clue.'}</p>
+                  </div>
+                )}
 
                 <div style={{ borderTop: '1px solid #2a2520', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                   <span style={{ fontSize: 14, color: '#e8e0d0' }}>Final score</span>
