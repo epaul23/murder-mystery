@@ -19,6 +19,7 @@ app.use(express.json({ limit: '32kb' }));
 const groq = process.env.GROQ_API_KEY
   ? new Groq({ apiKey: process.env.GROQ_API_KEY })
   : null;
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
 const CASES = {
   1: {
@@ -296,7 +297,7 @@ RESPONSE RULES:
   ];
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
       max_tokens: 120, temperature: 0.5,
     });
@@ -337,7 +338,7 @@ app.post('/api/accuse', async (req, res) => {
   }
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 250, temperature: 0.9,
     });
