@@ -7,6 +7,7 @@ const DIFF_COLOR = { easy: '#4ade80', medium: '#facc15', hard: '#f87171' }
 
 // Max questions allowed per case
 const MAX_QUESTIONS = 20
+const STARTING_SCORE = 1200
 
 const METHOD_OPTIONS = ['Poison', 'Stabbing', 'Suffocation', 'Blunt force', 'Sedatives', 'Other']
 const MOTIVE_OPTIONS = ['Blackmail', 'Revenge', 'Financial gain', 'Jealousy', 'Self-protection', 'Other']
@@ -80,7 +81,7 @@ export default function Game() {
 
   // Scoring
   const [questionCounts, setQuestionCounts] = useState({})
-  const [score, setScore] = useState(1000)
+  const [score, setScore] = useState(STARTING_SCORE)
 
   const chatRef = useRef(null)
 
@@ -148,7 +149,7 @@ export default function Game() {
     } catch (error) {
       setHistories(prev => ({ ...prev, [selectedSuspect]: [...newHistory, { role: 'assistant', content: error.message || 'The interrogation could not continue. Try again.' }] }))
       setQuestionCounts(prev => ({ ...prev, [selectedSuspect]: Math.max((prev[selectedSuspect] || 1) - 1, 0) }))
-      setScore(prev => Math.min(prev + 20, 1000))
+      setScore(prev => Math.min(prev + 20, STARTING_SCORE))
     }
     setLoading(false)
   }
@@ -165,7 +166,7 @@ export default function Game() {
         body: JSON.stringify({ caseId: Number(caseId), accusedName, accusedMethod, accusedMotive, reasoning }),
       })
       if (typeof data.correct !== 'boolean' || typeof data.reveal !== 'string') throw new Error('The case result was incomplete. Try again.')
-      const finalScore = data.correct ? Math.max(score + 200, 0) : Math.max(score - 200, 0)
+      const finalScore = data.correct ? score : Math.max(score - 200, 0)
       setScore(finalScore)
       setReveal({ ...data, finalScore })
     } catch (error) {
@@ -398,7 +399,7 @@ export default function Game() {
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', overflowY: 'auto', zIndex: 50 }}>
             <div style={{ background: '#0d0d0a', border: '1px solid #2a1515', borderRadius: 12, padding: '2rem', maxWidth: 500, width: '100%', margin: 'auto' }}>
               <h2 style={{ fontSize: 20, fontWeight: 400, color: '#e8e0d0', marginBottom: 4 }}>Make your accusation</h2>
-              <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Score: <span style={{ color: '#8b7355' }}>{score} pts</span> — Correct adds 200pts</p>
+              <p style={{ fontSize: 13, color: '#4a3f35', marginBottom: 20 }}>Score: <span style={{ color: '#8b7355' }}>{score} pts</span> — each question costs 20 pts</p>
 
               <p style={{ fontSize: 11, color: '#4a3f35', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Who killed them?</p>
               <div className="accusation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
@@ -473,7 +474,7 @@ export default function Game() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, color: '#6b6055' }}>Starting score</span>
-                  <span style={{ fontSize: 13, color: '#8b7355' }}>1000</span>
+                  <span style={{ fontSize: 13, color: '#8b7355' }}>{STARTING_SCORE}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, color: '#6b6055' }}>Questions penalty</span>
@@ -481,7 +482,7 @@ export default function Game() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                   <span style={{ fontSize: 13, color: '#6b6055' }}>Accusation</span>
-                  <span style={{ fontSize: 13, color: reveal.correct ? '#4ade80' : '#f87171' }}>{reveal.correct ? '+200' : '-200'}</span>
+                  <span style={{ fontSize: 13, color: reveal.correct ? '#4ade80' : '#f87171' }}>{reveal.correct ? 'Solved' : '-200'}</span>
                 </div>
 
                 <div style={{ borderTop: '1px solid #2a2520', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
