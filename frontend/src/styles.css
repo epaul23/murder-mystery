@@ -1,0 +1,112 @@
+:root {
+  color-scheme: dark;
+  font-synthesis: none;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid #c8b090;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed !important;
+}
+
+@media (max-width: 700px) {
+  .game-header {
+    align-items: flex-start !important;
+    gap: 10px;
+    padding: 10px 12px !important;
+  }
+
+  .game-header > div:nth-child(2) {
+    display: none;
+  }
+
+  .crime-banner {
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  .crime-banner > div:first-of-type,
+  .crime-banner > div:last-of-type {
+    display: none;
+  }
+
+  .game-main {
+    flex-direction: column;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .suspect-sidebar {
+    width: 100% !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #1a1a15;
+    overflow: visible !important;
+  }
+
+  .suspect-sidebar > button:not(:last-child) {
+    display: inline-block;
+    width: calc(50% - 4px) !important;
+    vertical-align: top;
+  }
+
+  .chat-area {
+    min-height: 480px;
+  }
+
+  .case-card {
+    align-items: stretch !important;
+  }
+
+  .case-card > div:first-child {
+    width: 105px !important;
+  }
+
+  .case-card > div:nth-child(2) {
+    padding: 16px 12px !important;
+  }
+
+  .case-tabs {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .crime-banner {
+    display: block !important;
+  }
+
+  .suspect-sidebar > button:not(:last-child) {
+    width: 100% !important;
+  }
+
+  .accusation-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .case-card > div:first-child {
+    display: none;
+  }
+}
