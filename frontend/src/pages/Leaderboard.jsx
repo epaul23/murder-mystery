@@ -5,14 +5,20 @@ export default function Leaderboard() {
   const [scores, setScores] = useState([])
   const [caseId, setCaseId] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
     setLoading(true)
+    setError('')
     fetch(`${import.meta.env.VITE_API_URL || ''}/api/leaderboard/${caseId}`)
-      .then(r => r.json())
+      .then(async response => {
+        const data = await response.json().catch(() => null)
+        if (!response.ok || !Array.isArray(data)) throw new Error(data?.error || 'Could not load leaderboard')
+        return data
+      })
       .then(data => { setScores(data); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(err => { setScores([]); setError(err.message); setLoading(false) })
   }, [caseId])
 
   const CASES = [
@@ -31,7 +37,7 @@ export default function Leaderboard() {
         </div>
 
         {/* Case selector */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
+        <div className="case-tabs" style={{ display: 'flex', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
           {CASES.map(c => (
             <button key={c.id} onClick={() => setCaseId(c.id)} style={{
               background: caseId === c.id ? '#1a1510' : 'none',
@@ -45,12 +51,14 @@ export default function Leaderboard() {
         {/* Scores */}
         {loading ? (
           <p style={{ textAlign: 'center', color: '#3a3530', letterSpacing: 2, fontSize: 12 }}>LOADING...</p>
+        ) : error ? (
+          <p role="alert" style={{ textAlign: 'center', color: '#f87171', fontSize: 14, marginTop: 40 }}>{error}</p>
         ) : scores.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#2a2520', fontSize: 14, marginTop: 40 }}>No scores yet. Be the first to solve this case!</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {scores.map((s, i) => (
-              <div key={s.id} style={{
+              <div key={s.id || `${s.player_name}-${i}`} style={{
                 background: '#080808', border: `1px solid ${i === 0 ? '#3a3020' : '#111'}`,
                 borderRadius: 6, padding: '1rem 1.5rem',
                 display: 'flex', alignItems: 'center', gap: 16,
