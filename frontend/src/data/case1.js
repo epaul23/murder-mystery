@@ -17,7 +17,7 @@ export const case1Briefing = [
     overlay: 0.6,
     eyebrow: 'Case File #001 — Incident Report',
     title: 'The Study',
-    body: 'Lord Edmund Blackwood was found slumped at his desk at 11:04 PM. The butler noticed the light still burning. The door was locked from inside. The window latch — open.',
+    body: 'Shortly after 8:00 PM, Lord Blackwood was found collapsed at his desk. His evening tea sat beside him. There was no sign of an intruder — everyone involved was already inside the manor.',
     tag: 'East Wing — Ground Floor',
   },
   {
@@ -25,8 +25,8 @@ export const case1Briefing = [
     layout: 'split-left',
     overlay: 0.3,
     eyebrow: 'Victim Profile',
-    title: 'Lord Edmund Blackwood',
-    body: 'Age 58. Retired Member of Parliament. Landowner of 4,000 acres. Known for his sharp business mind — and sharper enemies.',
+    title: 'Lord Blackwood',
+    body: 'The formidable head of the Blackwood estate. His decisions about money, business, and inheritance had placed the household under growing strain.',
     tag: 'Cause of Death: Arsenic Poisoning',
   },
   {
@@ -35,7 +35,7 @@ export const case1Briefing = [
     overlay: 0.4,
     eyebrow: 'Physical Evidence — Exhibit A',
     title: 'The Evening Tea',
-    body: 'Toxicology confirmed lethal levels of arsenic in Lord Blackwood\'s evening tea. The cup was prepared at 21:30. He was dead by 23:00. Someone in this house knew exactly what they were doing.',
+    body: 'Toxicology confirmed lethal levels of arsenic in Lord Blackwood\'s evening tea. It was prepared shortly before 7:50 PM and served at approximately 7:53. Someone in this house knew exactly what they were doing.',
     tag: '⚠ White powder residue confirmed as arsenic trioxide',
   },
   {
@@ -53,7 +53,7 @@ export const case1Briefing = [
     overlay: 0.75,
     eyebrow: 'Your Assignment',
     title: 'Find the Truth.',
-    body: 'You have 20 questions. Every question costs you points. Every contradiction brings you closer.\n\nThe killer has rehearsed their story. Listen carefully. The truth is always in the details.',
+    body: 'You have up to 20 questions. Ask carefully — a shorter investigation earns a better efficiency bonus.\n\nThe killer has rehearsed their story. Listen carefully. The truth is always in the details.',
     tag: 'Detective Harlow — Special Investigations Division',
   },
 ]

@@ -330,6 +330,7 @@ CASE: ${caseData.title} | SETTING: ${caseData.setting} | VICTIM: ${caseData.vict
 DIFFICULTY: ${DIFFICULTY_PROMPTS[caseData.difficulty]}
 YOU ARE PLAYING: ${suspectName} (${suspect.role}) — ${suspect.bio}
 PERSONALITY: ${suspect.personality}
+CANONICAL NAMES: The victim is exactly "${caseData.victim}". The only named suspects are ${Object.keys(caseData.suspects).join(', ')}. Keep every spelling exact. Unnamed witnesses must remain unnamed; never invent a person's name, title, room, time, or event.
 FIXED ALIBI: ${suspect.alibi || 'Use only the alibi information present in the biography and personality.'}
 FACTS YOU MAY KNOW: ${suspect.facts || 'Use only the facts present in the biography and personality.'}
 PRIVATE INFORMATION: ${suspect.secret || 'Do not invent a private secret.'}
@@ -345,6 +346,7 @@ RESPONSE RULES:
 - Let vocabulary, rhythm, confidence, and evasiveness reflect this suspect's personality. Avoid sounding like a neutral summary of the case file.
 - Never use parenthetical or asterisk stage directions. Blend emotion into word choice, self-correction, guardedness, warmth, irritation, or hesitation rather than naming the emotion like a stage direction.
 - Maintain the fixed alibi and timeline. Never invent new people, rooms, times, evidence, or events.
+- Refer to unnamed people only as "a guest," "a witness," or their supplied role. Never create names to make an answer sound more detailed.
 - Reveal at most one new useful fact per answer, only when the question is relevant and the progression permits it.
 - Do not repeat a clue or signature phrase from your recent answers. Do not mention tea, arsenic, or another suspect unless relevant to the question.
 - A casual question must remain in character and emotionally specific without volunteering a murder clue. A direct accusation deserves a firm denial, not a confession or a new pile of clues.
