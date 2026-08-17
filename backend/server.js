@@ -347,6 +347,44 @@ const CASUAL_REPLIES = {
   ],
 };
 
+const CASE_ONE_BROAD_REPLIES = {
+  'Clara Finch': {
+    whereabouts: "I was in the kitchen preparing Lord Blackwood's evening tea. It was part of my usual duties, though I understand why that puts me under suspicion.",
+    enemies: "I couldn't honestly name an enemy, Detective. Whatever disagreements Lord Blackwood may have had were not matters he discussed with me.",
+  },
+  'Victoria Blackwood': {
+    whereabouts: "I was alone in the library that evening. I remained there until the alarm was raised.",
+    enemies: "Not that he ever confided to me. My husband could be uncompromising, but I will not turn ordinary disagreements into accusations without proof.",
+  },
+  'Dr. Edmund Hale': {
+    whereabouts: "I was playing cards in the drawing room with three guests. I remained with them until Lord Blackwood collapsed.",
+    enemies: "I treated Lord Blackwood as a patient, not as a confidant. I knew of no one who openly wished him harm.",
+  },
+  'Reginald Cross': {
+    whereabouts: "I spent most of the evening in the billiards room with two guests. Afterward, I crossed the main corridor alone.",
+    enemies: "Our business dispute was public, but it had already been settled. Beyond that, I know of no one I could honestly call his enemy.",
+  },
+};
+
+function getSafeBroadReply(caseId, suspectName, question) {
+  if (Number(caseId) !== 1) return null;
+  const replies = CASE_ONE_BROAD_REPLIES[suspectName];
+  if (!replies) return null;
+  const normalized = question.toLowerCase()
+    .replace(/[^a-z0-9'\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (/\bwhere (were|was) you\b/.test(normalized)
+    && /\b(when|night|evening|time|died|death|murder|happened)\b/.test(normalized)) {
+    return replies.whereabouts;
+  }
+  if (/\b(enemy|enemies)\b/.test(normalized)
+    || /\bwho (wanted|would want|might want) (him|lord blackwood) dead\b/.test(normalized)) {
+    return replies.enemies;
+  }
+  return null;
+}
+
 app.post('/api/interrogate', async (req, res) => {
   const { caseId, suspectName, question, suspectTurn, previousReplies } = req.body || {};
   const caseData = getCase(caseId);
@@ -378,6 +416,10 @@ app.post('/api/interrogate', async (req, res) => {
     const replies = CASUAL_REPLIES[suspectName];
     const reply = replies[(turn - 1) % replies.length];
     return res.json({ reply });
+  }
+  const safeBroadReply = getSafeBroadReply(caseId, suspectName, question);
+  if (safeBroadReply) {
+    return res.json({ reply: safeBroadReply });
   }
   if (!groq) {
     return res.status(503).json({ error: 'Interrogations are temporarily unavailable' });
