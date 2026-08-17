@@ -110,32 +110,48 @@ export default function CaseSelect() {
   )
 
   return (
-    <div style={{
+    <div className="case-select-page motion-enabled" style={{
       minHeight: '100vh',
       // ── Background image — replace bg.png with your detective desk image
-      backgroundImage: 'url(/cases/bg-v2.png)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed',
       position: 'relative',
     }}>
 
+      {/* Animated detective-office background */}
+      <video
+        className="case-select-scene"
+        autoPlay
+        loop
+        muted
+        playsInline
+        poster="/cases/bg-v2.png"
+        aria-hidden="true"
+      >
+        <source src="/cases/bg-v2-cinematic-loop-v3.mp4" type="video/mp4" />
+      </video>
+
       {/* Dark overlay so text is readable */}
-      <div style={{
-        position: 'absolute', inset: 0,
+      <div className="case-select-shade" style={{
+        position: 'fixed', inset: 0,
         background: 'linear-gradient(180deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.66) 42%, rgba(0,0,0,0.82) 100%)',
         pointerEvents: 'none',
       }} />
 
-      {/* Vignette */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.48) 100%)',
-        pointerEvents: 'none',
-      }} />
+      {/* Atmospheric lighting and movement */}
+      <div className="case-select-atmosphere" aria-hidden="true">
+        <div className="case-select-atmosphere__lamps" />
+        <div className="case-select-atmosphere__light-beam" />
+        <div className="case-select-atmosphere__window" />
+        <div className="case-select-atmosphere__shadow" />
+        <div className="case-select-fog case-select-fog--far" />
+        <div className="case-select-fog case-select-fog--middle" />
+        <div className="case-select-fog case-select-fog--near" />
+        <div className="case-select-atmosphere__vignette" />
+      </div>
+
+      <div className="motion-preview-badge">Motion preview active</div>
 
       {/* Content */}
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 860, margin: '0 auto', padding: '2rem 1rem' }}>
+      <div style={{ position: 'relative', zIndex: 2, maxWidth: 860, margin: '0 auto', padding: '2rem 1rem' }}>
 
         {/* ── Header ── */}
         <div style={{ textAlign: 'center', padding: '5rem 0 3rem' }}>
