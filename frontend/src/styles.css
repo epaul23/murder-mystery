@@ -37,11 +37,8 @@ button:disabled {
 .case-select-scene {
   position: fixed;
   inset: -3%;
-  width: 106%;
-  height: 106%;
   z-index: 0;
-  object-fit: cover;
-  object-position: center;
+  background: url('/cases/bg-v2.png') center / cover no-repeat;
   filter: saturate(0.9) contrast(1.08);
   transform: scale(1.025);
   transform-origin: 54% 48%;

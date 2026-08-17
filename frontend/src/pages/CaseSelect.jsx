@@ -117,17 +117,7 @@ export default function CaseSelect() {
     }}>
 
       {/* Animated detective-office background */}
-      <video
-        className="case-select-scene"
-        autoPlay
-        loop
-        muted
-        playsInline
-        poster="/cases/bg-v2.png"
-        aria-hidden="true"
-      >
-        <source src="/cases/bg-v2-cinematic-loop-v3.mp4" type="video/mp4" />
-      </video>
+      <div className="case-select-scene" aria-hidden="true" />
 
       {/* Dark overlay so text is readable */}
       <div className="case-select-shade" style={{
