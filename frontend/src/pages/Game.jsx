@@ -25,7 +25,7 @@ const AVATAR_COLORS = [
 
 // Background image per case
 const CASE_BG = {
-  1: '/cases/case1/interrogation-moonlit.png',
+  1: '/cases/case1/interrogation-study.png',
   2: '/cases/case2/train.png',
   3: '/cases/case3/office.png',
 }
@@ -218,7 +218,7 @@ export default function Game() {
       {/* ── Dark overlay ── */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 1,
-        background: Number(caseId) === 1 ? 'rgba(4,7,10,0.42)' : 'rgba(0,0,0,0.87)',
+        background: Number(caseId) === 1 ? 'rgba(4,7,10,0.28)' : 'rgba(0,0,0,0.87)',
       }} />
 
       {/* ── All UI content above overlay ── */}

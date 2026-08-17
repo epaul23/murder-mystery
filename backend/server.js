@@ -292,26 +292,27 @@ function isCasualQuestion(question) {
   const normalized = question.toLowerCase()
     .replace(/[^a-z0-9'\s]/g, ' ')
     .replace(/\s+/g, ' ')
-    .trim();
-  return /^(hello|hey|good (morning|afternoon|evening)|how (are you|r u|ru|are you doing|are you holding up|are you feeling|have you been|do you feel|is it going)( today| lately| right now)?|how (are you feeling|do you feel) after (what happened|all this|the incident)|how's it going|are you (okay|alright|all right)|what's up)$/.test(normalized);
+    .trim()
+    .replace(/^(hoe|hwo)\b/, 'how');
+  return /^(hello|hey|good (morning|afternoon|evening)|how (are you|are u|r u|ru|are you doing|are you holding up|are you feeling|have you been|do you feel|is it going)( today| lately| right now)?|how (are you feeling|do you feel) after (what happened|all this|the incident)|how are you (coping|handling)( with everything| with all this| with the investigation| the investigation)?|how's it going|are you (okay|alright|all right)|what's up)$/.test(normalized);
 }
 
 const CASUAL_REPLIES = {
   'Clara Finch': [
-    "I'm doing my best to stay composed, Detective, but being watched so closely makes every ordinary task feel like a test. I've spent ten years caring for this household; it's unsettling to feel like a stranger in it now.",
-    "Tired, if I'm honest. I usually find comfort in keeping busy, but today even familiar work feels different, and I can't quite shake the feeling that everyone is waiting for me to make a mistake.",
+    "Clara smooths her apron and lets out a small, unsteady breath. “I'm doing my best to stay composed, Detective, but being watched so closely makes every ordinary task feel like a test. After ten years here, it's unsettling to feel like a stranger in the house.”",
+    "Clara sighs and glances toward the door. “Tired, if I'm honest. I usually find comfort in keeping busy, but today even familiar work feels different—like everyone is waiting for me to make a mistake.”",
   ],
   'Victoria Blackwood': [
-    "I'm holding myself together because someone must. Grief is untidy, Detective, and this household has endured enough disorder without me adding to it.",
-    "I won't pretend I'm comfortable, but I was not raised to unravel in public. Keeping my composure is about the only thing that still feels within my control.",
+    "Victoria lifts her chin, though her fingers tighten around one another. “I'm holding myself together because someone must. Grief is untidy, Detective, and this household has endured enough disorder without me adding to it.”",
+    "Victoria exhales slowly and raises an eyebrow. “I won't pretend I'm comfortable, but I was not raised to unravel in public. Keeping my composure is about the only thing that still feels within my control.”",
   ],
   'Dr. Edmund Hale': [
-    "I'm functioning, which is not quite the same as being unaffected. A physician learns to stay precise when others panic, but familiarity with death does not make it welcome.",
-    "Concerned, naturally, though I prefer to be useful rather than visibly distressed. Keeping a clear head is sometimes the kindest thing a doctor can offer.",
+    "Dr. Hale removes his spectacles and rubs the bridge of his nose. “I'm functioning, which is not quite the same as being unaffected. A physician learns to stay precise when others panic, but familiarity with death does not make it welcome.”",
+    "Dr. Hale straightens his cuffs before answering. “Concerned, naturally, though I prefer to be useful rather than visibly distressed. Keeping a clear head is sometimes the kindest thing a doctor can offer.”",
   ],
   'Reginald Cross': [
-    "I've had better evenings. I prefer problems that can be settled across a desk; suspicion is a far less civilized business.",
-    "Restless, if you want the truth. I'm accustomed to difficult negotiations, but this waiting and whispering would test anyone's patience.",
+    "Reginald rolls his eyes, then catches himself. “I've had better evenings. I prefer problems that can be settled across a desk; suspicion is a far less civilized business.”",
+    "Reginald's jaw tightens. “Restless, if you want the truth. I'm accustomed to difficult negotiations, but this waiting and whispering would test anyone's patience.”",
   ],
   'Sophia Vance': [
     "I've been better. Years spent organizing other people's lives taught me to stay calm, but at the moment even simple decisions seem to take more effort than they should.",
@@ -349,22 +350,71 @@ const CASUAL_REPLIES = {
 
 const CASE_ONE_BROAD_REPLIES = {
   'Clara Finch': {
-    whereabouts: "I was in the kitchen preparing Lord Blackwood's evening tea. It was part of my usual duties, though I understand why that puts me under suspicion.",
-    enemies: "I couldn't honestly name an enemy, Detective. Whatever disagreements Lord Blackwood may have had were not matters he discussed with me.",
+    whereabouts: "Clara clasps her hands tightly. “I was in the kitchen preparing Lord Blackwood's evening tea. It was part of my usual duties, though I understand why that puts me under suspicion.”",
+    enemies: "Clara shakes her head. “I couldn't honestly name an enemy, Detective. Whatever disagreements Lord Blackwood may have had were not matters he discussed with me.”",
   },
   'Victoria Blackwood': {
-    whereabouts: "I was alone in the library that evening. I remained there until the alarm was raised.",
-    enemies: "Not that he ever confided to me. My husband could be uncompromising, but I will not turn ordinary disagreements into accusations without proof.",
+    whereabouts: "Victoria meets your gaze without blinking. “I was alone in the library that evening. I remained there until the alarm was raised.”",
+    enemies: "Victoria tilts her head, considering the question. “Not that he ever confided to me. My husband could be uncompromising, but I will not turn ordinary disagreements into accusations without proof.”",
   },
   'Dr. Edmund Hale': {
-    whereabouts: "I was playing cards in the drawing room with three guests. I remained with them until Lord Blackwood collapsed.",
-    enemies: "I treated Lord Blackwood as a patient, not as a confidant. I knew of no one who openly wished him harm.",
+    whereabouts: "Dr. Hale answers without hesitation. “I was playing cards in the drawing room with three guests. I remained with them until Lord Blackwood collapsed.”",
+    enemies: "Dr. Hale presses his lips into a thin line. “I treated Lord Blackwood as a patient, not as a confidant. I knew of no one who openly wished him harm.”",
   },
   'Reginald Cross': {
-    whereabouts: "I spent most of the evening in the billiards room with two guests. Afterward, I crossed the main corridor alone.",
-    enemies: "Our business dispute was public, but it had already been settled. Beyond that, I know of no one I could honestly call his enemy.",
+    whereabouts: "Reginald leans back, visibly impatient. “I spent most of the evening in the billiards room with two guests. Afterward, I crossed the main corridor alone.”",
+    enemies: "Reginald gives a humorless laugh. “Our business dispute was public, but it had already been settled. Beyond that, I know of no one I could honestly call his enemy.”",
   },
 };
+
+const CASE_ONE_GUIDED_REPLIES = {
+  'Clara Finch': {
+    tray: "Clara's fingers tighten around the edge of her apron. “Yes. I left the tray outside the study for about two minutes while I fetched Victoria's shawl. I hated admitting that—I knew exactly how careless it would sound.”",
+    study: "Clara hesitates, then lowers her voice. “Victoria was standing just outside the study when I returned. I only saw her for a moment, but I am certain it was her.”",
+  },
+  'Victoria Blackwood': {
+    relationship: "Victoria's mouth tightens. “Strained, lately. We argued more than I care to admit, but I will not reduce a marriage to its worst disagreement simply because you find that convenient.”",
+    haleVisit: "Victoria pauses, then gives a small, impatient sigh. “Yes, I visited Dr. Hale at 5:15 for a headache remedy. He stepped away briefly, but I neither touched nor examined his medical bag.”",
+  },
+  'Dr. Edmund Hale': {
+    cause: "Dr. Hale's expression turns clinical. “Arsenic poisoning. The tea contained a lethal amount, and the timing is consistent with Lord Blackwood collapsing shortly after he drank it.”",
+    missing: "Dr. Hale removes his spectacles and looks away. “Yes. A measured vial of arsenic is missing from my bag. I should have reported it sooner.”",
+    access: "Dr. Hale exhales sharply. “Victoria was beside the bag when I stepped out for two minutes during her 5:15 visit. That is the only specific opportunity I can attest to.”",
+  },
+  'Reginald Cross': {
+    dispute: "Reginald rolls his eyes. “Yes, we had a public business dispute, but it was resolved a week ago. Whatever else you think of me, I had no reason to reopen it.”",
+    study: "Reginald's jaw tightens before he answers. “I saw a woman outside the study at about 7:50, but from where I stood, I could not say who she was.”",
+  },
+};
+
+function getGuidedCaseOneReply(caseId, suspectName, question) {
+  if (Number(caseId) !== 1) return null;
+  const replies = CASE_ONE_GUIDED_REPLIES[suspectName];
+  if (!replies) return null;
+  const normalized = question.toLowerCase()
+    .replace(/[^a-z0-9'\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (suspectName === 'Clara Finch') {
+    if (/\btea tray\b/.test(normalized) && /\b(unattended|alone|left|leave|stepped away)\b/.test(normalized)) return replies.tray;
+    if (/\b(see|saw|notice|noticed)\b/.test(normalized) && /\b(near|outside)\b/.test(normalized) && /\bstudy\b/.test(normalized)) return replies.study;
+  }
+  if (suspectName === 'Victoria Blackwood') {
+    if (/\brelationship\b/.test(normalized) && /\b(husband|lord blackwood|victim)\b/.test(normalized)) return replies.relationship;
+    if (/\bvisit(ed)?\b/.test(normalized) && /\b(dr edmund hale|dr hale|doctor hale|hale)\b/.test(normalized)) return replies.haleVisit;
+  }
+  if (suspectName === 'Dr. Edmund Hale') {
+    if (/\b(what caused|cause of|how did)\b/.test(normalized) && /\b(death|die|died)\b/.test(normalized)) return replies.cause;
+    if (/\bmissing\b/.test(normalized) && /\b(bag|medical bag|vial|anything)\b/.test(normalized)) return replies.missing;
+    if (/\bwho\b/.test(normalized) && /\baccess\b/.test(normalized) && /\b(bag|medical bag)\b/.test(normalized)) return replies.access;
+  }
+  if (suspectName === 'Reginald Cross') {
+    if (/\b(business dispute|business disagreement|at odds)\b/.test(normalized)) return replies.dispute;
+    if (/\b(see|saw|notice|noticed)\b/.test(normalized) && /\b(near|outside)\b/.test(normalized) && /\bstudy\b/.test(normalized)) return replies.study;
+  }
+  return null;
+}
 
 function getSafeBroadReply(caseId, suspectName, question) {
   if (Number(caseId) !== 1) return null;
@@ -421,6 +471,10 @@ app.post('/api/interrogate', async (req, res) => {
   if (safeBroadReply) {
     return res.json({ reply: safeBroadReply });
   }
+  const guidedReply = getGuidedCaseOneReply(caseId, suspectName, question);
+  if (guidedReply) {
+    return res.json({ reply: guidedReply });
+  }
   if (!groq) {
     return res.status(503).json({ error: 'Interrogations are temporarily unavailable' });
   }
@@ -454,7 +508,8 @@ RESPONSE RULES:
 - You may invent harmless color—present emotions, bodily sensations, weather, general atmosphere, preferences, and personal opinions—to make the character feel alive. Harmless color must never introduce or imply a new person, relationship, history, room, time, action, possession, conversation, motive, opportunity, piece of evidence, or accusation.
 - Ground every investigative statement in the biography, fixed alibi, known facts, private information, and the currently permitted progression. If those facts do not support an answer about enemies, relationships, or events, say you do not know or answer cautiously instead of filling the gap.
 - Let vocabulary, rhythm, confidence, and evasiveness reflect this suspect's personality. Avoid sounding like a neutral summary of the case file.
-- Never use parenthetical or asterisk stage directions. Blend emotion into word choice, self-correction, guardedness, warmth, irritation, or hesitation rather than naming the emotion like a stage direction.
+- Occasionally begin with one brief physical reaction in plain prose, such as a sigh, eye roll, pause, tightened jaw, averted gaze, or nervous hand movement. Make it specific to this suspect's personality and current pressure; do not add one to every reply.
+- Keep any physical reaction to one short sentence before the spoken answer. Never use asterisks, parentheses, screenplay labels, or multiple theatrical actions.
 - Maintain the fixed alibi and timeline. Never invent new people, rooms, times, evidence, or events.
 - Refer to unnamed people only as "a guest," "a witness," or their supplied role. Never create names to make an answer sound more detailed.
 - Treat CLUE PROGRESSION as a hard ceiling, not a suggestion. Never reveal a middle or late clue early. The fixed alibi is a consistency reference, not permission to volunteer every detail.
