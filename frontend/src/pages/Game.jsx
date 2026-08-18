@@ -110,6 +110,10 @@ export default function Game() {
       .filter(message => message.role === 'assistant' && typeof message.content === 'string')
       .slice(-4)
       .map(message => message.content)
+    const conversation = previousHistory
+      .filter(message => (message.role === 'user' || message.role === 'assistant') && typeof message.content === 'string')
+      .slice(-40)
+      .map(message => ({ role: message.role, content: message.content }))
     const suspectTurn = (questionCounts[selectedSuspect] || 0) + 1
     const newHistory = [...previousHistory, { role: 'user', content: q }]
     setHistories(prev => ({ ...prev, [selectedSuspect]: newHistory }))
@@ -125,6 +129,7 @@ export default function Game() {
           question: q,
           suspectTurn,
           previousReplies,
+          conversation,
         }),
       })
       if (typeof data.reply !== 'string' || !data.reply.trim()) throw new Error('The suspect did not answer. Try again.')
