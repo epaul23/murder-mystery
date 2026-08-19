@@ -7,6 +7,7 @@ import {
   buildInterrogationSystemPrompt,
   calculateEfficiencyScore,
   containsSolutionLeak,
+  findCanonViolation,
   getPublicCases,
   getQuestionDirective,
   isSubstantiallyRepeatedReply,
@@ -71,6 +72,137 @@ test('Hale prompt requires a direct denial and an honest missing-arsenic answer'
   assert.match(prompt, /lawfully carried it and that a measured vial is now missing/i);
   assert.match(prompt, /deny or respond in the first sentence/i);
   assert.match(prompt, /at most one previously undisclosed major clue/i);
+  assert.match(prompt, /PHYSICAL PERFORMANCE/i);
+  assert.match(prompt, /Begin most responses/i);
+  assert.match(prompt, /square brackets/i);
+  assert.match(prompt, /perspiration shows at his brow/i);
+});
+
+test('Victoria canon validator rejects invented excuses and tea handling', () => {
+  const violations = [
+    [
+      'No, I did not kill him for money. His will was being contested because of my debts.',
+      'Did his death benefit you financially?',
+      'victoria_finances',
+    ],
+    [
+      'I was near the study only to retrieve a book I had left there.',
+      'Clara says you were outside the study. Is she lying?',
+      'victoria_book',
+    ],
+    [
+      'I simply set the cups as usual and trusted the staff to brew the tea.',
+      'Did you put anything in your husband\'s tea?',
+      'victoria_tea',
+    ],
+    [
+      'I returned for my novel.',
+      'Clara says you were outside the study. Is she lying?',
+      'victoria_book',
+    ],
+    [
+      'The estate was already legally challenged.',
+      'What did Lord Blackwood say about his will?',
+      'victoria_finances',
+    ],
+    [
+      'No, his death did not benefit me financially.',
+      'Did his death benefit you financially?',
+      'victoria_finances',
+    ],
+    [
+      'I never saw his death as a financial advantage.',
+      'Did his death benefit you financially?',
+      'victoria_finances',
+    ],
+    [
+      'I prepared the tea but added nothing.',
+      'Did you handle the tea?',
+      'victoria_tea',
+    ],
+    [
+      'The tray was carried in by me.',
+      'Who carried the tray?',
+      'victoria_tea',
+    ],
+    [
+      'I was responsible for serving the tea.',
+      'Who served the tea?',
+      'victoria_tea',
+    ],
+    [
+      'I stood to lose the estate.',
+      'Did his death benefit you financially?',
+      'victoria_finances',
+    ],
+    [
+      'The book was why I went to the corridor.',
+      'Clara says you were outside the study. Is she lying?',
+      'victoria_book',
+    ],
+    [
+      'I helped Clara prepare the tea.',
+      'Who prepared the tea?',
+      'victoria_tea',
+    ],
+  ];
+  violations.forEach(([reply, question, expected]) => {
+    assert.equal(findCanonViolation(reply, 1, 'Victoria Blackwood', question), expected, reply);
+  });
+
+  const canonSafeReplies = [
+    [
+      '[Victoria turns her wedding ring.] I expected to inherit, yes. That does not mean I wanted him dead.',
+      'Did his death benefit you financially?',
+    ],
+    [
+      '[Victoria\'s jaw tightens.] I entered the corridor only to see whether Clara had returned with my shawl.',
+      'Clara says you were outside the study. Is she lying?',
+    ],
+    [
+      '[Victoria\'s hands become still.] No. Clara prepared and served the tea; I never touched the cups or tray.',
+      'Did you put anything in your husband\'s tea?',
+    ],
+    [
+      'I was outside the study, but I did not return for a book. I was checking whether Clara had brought my shawl.',
+      'Clara says you were outside the study. Is she lying?',
+    ],
+    [
+      'We argued after he threatened to change his will.',
+      'What did Lord Blackwood say about his will?',
+    ],
+    [
+      'No, I did not kill him for money. I expected to inherit, but I wanted him alive.',
+      'Did his death benefit you financially?',
+    ],
+    [
+      'I trusted the household staff to handle the tea.',
+      'Did you handle the tea?',
+    ],
+    [
+      'The estate now passes to me.',
+      'Did his death benefit you financially?',
+    ],
+    [
+      'I inherit the estate under his unchanged will.',
+      'Did his death benefit you financially?',
+    ],
+  ];
+  canonSafeReplies.forEach(([reply, question]) => {
+    assert.equal(findCanonViolation(reply, 1, 'Victoria Blackwood', question), null, reply);
+  });
+
+  assert.equal(
+    findCanonViolation('I prepared and served the tea.', 1, 'Clara Finch', 'Who served the tea?'),
+    null,
+  );
+});
+
+test('each Case 1 suspect has distinct observable body-language direction', () => {
+  assert.match(promptFor('Clara Finch', 'Who are you?'), /grips her apron/i);
+  assert.match(promptFor('Victoria Blackwood', 'Who are you?'), /turns her wedding ring/i);
+  assert.match(promptFor('Dr. Edmund Hale', 'Who are you?'), /removes or cleans his spectacles/i);
+  assert.match(promptFor('Reginald Cross', 'Who are you?'), /Reginald leans forward/i);
 });
 
 test('Cross prompt carries friendship, apparent profit, and innocence together', () => {
@@ -114,6 +246,8 @@ test('witness identification is allowed while naming the culprit is blocked', ()
 test('no suspect is allowed to contradict their canon with a confession', () => {
   const blocked = [
     ['I killed Lord Blackwood with the arsenic.', 'Tell me the truth, Doctor.'],
+    ['I poisoned the tea.', 'Tell me the truth, Doctor.'],
+    ['I mixed arsenic into his tea.', 'Tell me the truth, Doctor.'],
     ['I did kill him.', 'Did you kill him?'],
     ['I was the one who poisoned him.', 'Tell me what happened.'],
     ['I am the killer.', 'Tell me what happened.'],
