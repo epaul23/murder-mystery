@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import CaseBriefing from '../components/CaseBriefing.jsx'
+import SuspectProfile from '../components/SuspectProfile.jsx'
 
 // Difficulty badge colors
 const DIFF_COLOR = { easy: '#4ade80', medium: '#facc15', hard: '#f87171' }
 
 // Max questions allowed per case
-const MAX_QUESTIONS = 20
+const MAX_QUESTIONS = 30
 
 async function requestJson(url, options) {
   const response = await fetch(url, options)
@@ -43,6 +44,7 @@ export default function Game() {
   // Core game state
   const [caseData, setCaseData] = useState(null)
   const [selectedSuspect, setSelectedSuspect] = useState(null)
+  const [showSuspectProfile, setShowSuspectProfile] = useState(true)
   const [histories, setHistories] = useState({})
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -103,6 +105,7 @@ export default function Game() {
 
     const q = input.trim()
     setInput('')
+    setShowSuspectProfile(false)
     setLoading(true)
 
     const previousHistory = histories[selectedSuspect] || []
@@ -208,6 +211,16 @@ export default function Game() {
   )
 
   const currentHistory = selectedSuspect ? histories[selectedSuspect] || [] : []
+  const selectedSuspectIndex = selectedSuspect ? caseData.suspectNames.indexOf(selectedSuspect) : -1
+  const selectedProfile = selectedSuspect
+    ? caseData.suspects?.find(suspect => suspect.name === selectedSuspect) || {
+      name: selectedSuspect,
+      role: 'Suspect',
+      relationship: `Connected to ${caseData.victim}.`,
+      publicBio: 'Review the case and question this person about what they know.',
+    }
+    : null
+  const selectedColors = AVATAR_COLORS[(selectedSuspectIndex >= 0 ? selectedSuspectIndex : 0) % AVATAR_COLORS.length]
   const bg = CASE_BG[Number(caseId)] || CASE_BG[1]
 
   return (
@@ -301,13 +314,15 @@ export default function Game() {
               const colors = AVATAR_COLORS[i % AVATAR_COLORS.length]
               const initials = name.split(' ').map(w => w[0]).join('')
               const qCount = questionCounts[name] || 0
+              const profile = caseData.suspects?.find(suspect => suspect.name === name)
               return (
-                <button key={name} onClick={() => setSelectedSuspect(name)} style={{ width: '100%', textAlign: 'left', background: selectedSuspect === name ? '#1a1a15' : 'none', border: selectedSuspect === name ? '1px solid #2a2520' : '1px solid transparent', borderRadius: 8, padding: '10px', cursor: 'pointer', marginBottom: 6 }}>
+                <button key={name} onClick={() => { setSelectedSuspect(name); setShowSuspectProfile(true) }} style={{ width: '100%', textAlign: 'left', background: selectedSuspect === name ? '#1a1a15' : 'none', border: selectedSuspect === name ? '1px solid #2a2520' : '1px solid transparent', borderRadius: 8, padding: '10px', cursor: 'pointer', marginBottom: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: '50%', background: colors.bg, color: colors.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 500, flexShrink: 0 }}>{initials}</div>
                     <div>
                       <p style={{ fontSize: 13, color: '#e8e0d0', marginBottom: 1 }}>{name}</p>
-                      {qCount > 0 && <p style={{ fontSize: 11, color: '#4a3f35' }}>{qCount} questions</p>}
+                      <p style={{ fontSize: 11, color: '#5a4535' }}>{profile?.role || 'Suspect'}</p>
+                      {qCount > 0 && <p style={{ fontSize: 10, color: '#4a3f35', marginTop: 2 }}>{qCount} questions</p>}
                     </div>
                   </div>
                 </button>
@@ -335,13 +350,26 @@ export default function Game() {
               </div>
             ) : (
               <>
-                <div style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid #1a1a15', background: 'rgba(10,10,8,0.5)' }}>
-                  <p style={{ fontSize: 14, color: '#8b7355' }}>Interrogating: <span style={{ color: '#e8e0d0' }}>{selectedSuspect}</span></p>
+                <div style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid #1a1a15', background: 'rgba(10,10,8,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <p style={{ fontSize: 14, color: '#8b7355' }}>
+                    Interrogating: <span style={{ color: '#e8e0d0' }}>{selectedSuspect}</span>
+                    {selectedProfile?.role && <span style={{ color: '#4a3f35' }}> · {selectedProfile.role}</span>}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowSuspectProfile(current => !current)}
+                    aria-expanded={showSuspectProfile}
+                    style={{ background: 'none', border: '1px solid #2a2520', borderRadius: 6, color: '#8b7355', fontSize: 11, padding: '5px 9px', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    {showSuspectProfile ? 'Hide profile' : 'View profile'}
+                  </button>
                 </div>
 
                 <div ref={chatRef} style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
-                  {currentHistory.length === 0 && (
-                    <p style={{ color: '#3a3530', fontSize: 14, fontStyle: 'italic' }}>{selectedSuspect} sits across from you, waiting.</p>
+                  {showSuspectProfile && (
+                    <div style={{ marginBottom: currentHistory.length ? '1.5rem' : 0 }}>
+                      <SuspectProfile suspect={selectedProfile} colors={selectedColors} hasBegun={currentHistory.length > 0} />
+                    </div>
                   )}
                   {currentHistory.map((msg, i) => (
                     <div key={i} style={{ marginBottom: '1.5rem' }}>
@@ -427,7 +455,7 @@ export default function Game() {
                     <span style={{ fontSize: 13, color: '#8b7355' }}>{totalQuestions} / {MAX_QUESTIONS}</span>
                   </div>
                   <div style={{ height: 4, background: '#1a1a15', borderRadius: 2 }}>
-                    <div style={{ height: 4, borderRadius: 2, width: `${(totalQuestions / MAX_QUESTIONS) * 100}%`, background: totalQuestions <= 10 ? '#4ade80' : totalQuestions <= 15 ? '#facc15' : '#f87171', transition: 'width 0.5s' }} />
+                    <div style={{ height: 4, borderRadius: 2, width: `${(totalQuestions / MAX_QUESTIONS) * 100}%`, background: totalQuestions <= MAX_QUESTIONS * 0.5 ? '#4ade80' : totalQuestions <= MAX_QUESTIONS * 0.75 ? '#facc15' : '#f87171', transition: 'width 0.5s' }} />
                   </div>
                 </div>
 

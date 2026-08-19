@@ -53,7 +53,7 @@ export const case1Briefing = [
     overlay: 0.75,
     eyebrow: 'Your Assignment',
     title: 'Find the Truth.',
-    body: 'You have up to 20 questions. Ask carefully — a shorter investigation earns a better efficiency bonus.\n\nThe killer has rehearsed their story. Listen carefully. The truth is always in the details.',
+    body: 'You have up to 30 questions. Ask carefully — a shorter investigation earns a better efficiency bonus.\n\nThe killer has rehearsed their story. Listen carefully. The truth is always in the details.',
     tag: 'Detective Harlow — Special Investigations Division',
   },
 ]

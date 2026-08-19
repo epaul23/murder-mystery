@@ -89,6 +89,11 @@ button:disabled {
     min-height: 480px;
   }
 
+  .suspect-profile-details {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
   .case-card {
     align-items: stretch !important;
   }
